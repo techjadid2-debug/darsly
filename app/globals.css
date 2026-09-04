@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Darsly design tokens. Mobile-first: every size below is tuned to read well
+ * at 360px, which is where most students will open a shared link.
+ */
+@theme {
+  --color-bg: #fbfaf9;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f2ef;
+  --color-border: #e5e1db;
+  --color-ink: #1c1a17;
+  --color-ink-soft: #6b6459;
+  --color-brand: #5b4bd6;
+  --color-brand-hover: #4a3bc4;
+  --color-brand-soft: #ece9fb;
+  --color-accent: #e07a3f;
+  --color-success: #2f8a5b;
+  --color-danger: #c0392b;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-card: 0.875rem;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @theme {
+    --color-bg: #131211;
+    --color-surface: #1c1a18;
+    --color-surface-2: #262320;
+    --color-border: #35312c;
+    --color-ink: #f2efe9;
+    --color-ink-soft: #a49c90;
+    --color-brand: #8b7cf0;
+    --color-brand-hover: #9d90f5;
+    --color-brand-soft: #241f3f;
+    --color-accent: #eb9463;
+    --color-success: #4caf7d;
+    --color-danger: #e5695a;
   }
 }
 
+html {
+  color-scheme: light dark;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  /* Games use drag gestures; stop the browser hijacking them as page scroll. */
+  overscroll-behavior-y: contain;
+}
+
+/* Keyboard focus stays visible everywhere; pointer focus does not add noise. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
 }

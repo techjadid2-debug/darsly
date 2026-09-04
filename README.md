@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Darsly
 
-## Getting Started
+Wordwall-style interactive activity maker for teachers in Uzbekistan. A teacher
+enters content **once** — word pairs, questions, categories — and the same
+content renders as several different games. UI in Uzbek (default) and Russian.
 
-First, run the development server:
+## Core architecture rule
+
+Content is separate from presentation. One `activities` row can be rendered by
+any game whose `schema_type` matches, so "switch game" never requires
+re-entering data.
+
+Four content schemas, defined as zod schemas in `lib/schemas.ts` (M2):
+
+| Schema     | Shape |
+|------------|-------|
+| `pairs`    | `{ items: [{ id, term, definition, image_url? }] }` |
+| `mcq`      | `{ items: [{ id, question, options: string[], correct_index }] }` |
+| `groups`   | `{ groups: [{ name, items: string[] }] }` |
+| `sequence` | `{ items: [{ id, text, blanks: number[] }] }` |
+
+Games are registered in `lib/games.ts`. Adding game #7 means adding one file
+under `components/games/<name>/index.tsx` plus one registry entry — nothing else.
+
+## Stack
+
+Next.js 15 (App Router) · TypeScript strict · Tailwind CSS v4 ·
+Supabase (Postgres + Auth + RLS) via `@supabase/ssr` · `@dnd-kit/core` ·
+`framer-motion` · deployed on Vercel.
+
+No Redux, no tRPC, no ORM. Mutations go through server actions; the browser
+never writes to `activities` directly.
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local   # fill in the three values
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Variable | Notes |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project API URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` key |
+| `NEXT_PUBLIC_SITE_URL` | Fallback origin; auth redirects prefer the request host |
+| `TELEGRAM_BOT_TOKEN` | M7 only, server-side |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+There is no `SUPABASE_SERVICE_ROLE_KEY` and no LLM API key: `play_count` is
+incremented through a `SECURITY DEFINER` RPC, and content generation is pure
+TypeScript (schema converters + file import), not an AI call.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Database
 
-## Learn More
+Migrations live in `supabase/migrations/` and are the source of truth.
 
-To learn more about Next.js, take a look at the following resources:
+- `0001_init.sql` — `profiles`, `activities`, `results`; indexes; the
+  `updated_at` trigger; the signup trigger that creates a profile row; RLS.
+- `0002_harden_functions.sql` — pins `search_path` and revokes public `EXECUTE`
+  on the trigger functions.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+RLS in one line: owners have full access to their activities, anyone (including
+anonymous visitors) can read public ones, anyone can submit a result to an
+activity they are allowed to play, and only the owner can read results back.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Milestones
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| | Scope | Status |
+|---|---|---|
+| M1 | Setup, auth, migrations, RLS, empty dashboard, first deploy | done |
+| M2 | zod schemas, game registry, editor (pairs + mcq), quiz + match-up, `/play` | |
+| M3 | Remaining 4 games, game switching, settings (timer, shuffle) | |
+| M4 | Content helper: schema converters, CSV/XLSX import, templates | |
+| M5 | `/library`, `is_public`, search/filter, `play_count` | |
+| M6 | `/embed`, `/print`, `/api/results` + results view | |
+| M7 | Telegram Mini App support | |
