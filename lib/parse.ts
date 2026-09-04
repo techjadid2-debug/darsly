@@ -2,14 +2,16 @@ import { makeId } from '@/lib/ids'
 import type { Group, McqItem, PairItem } from '@/lib/schemas'
 
 /**
- * Bulk paste. Teachers will not type twenty rows by hand — they paste from
- * Excel, Word or a text file. Excel copies tab-separated, so tabs win; the
- * other separators are fallbacks for content typed by hand.
+ * Import plumbing shared by bulk paste and file upload.
+ *
+ * Both paths reduce to `string[][]` — rows of cells — and then to content by
+ * the `rowsTo*` functions below, so pasting from Excel and uploading the same
+ * spreadsheet produce identical results.
  */
 
 const SEPARATORS = ['\t', ';', ' — ', ' – ', ' - ', ','] as const
 
-/** Splits one line into columns using the first separator that appears in it. */
+/** Splits one line into cells using the first separator that appears in it. */
 export function splitColumns(line: string): string[] {
   const separator = SEPARATORS.find((candidate) => line.includes(candidate))
   if (!separator) return [line.trim()]
@@ -19,28 +21,40 @@ export function splitColumns(line: string): string[] {
     .filter((cell) => cell.length > 0)
 }
 
-function toLines(text: string): string[] {
+/** Pasted text to rows of cells. */
+export function textToRows(text: string): string[][] {
   return text
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
+    .map(splitColumns)
+}
+
+/** Cleans cells coming out of a CSV or spreadsheet reader. */
+export function normalizeRows(rows: ReadonlyArray<ReadonlyArray<unknown>>): string[][] {
+  return rows
+    .map((row) =>
+      row
+        .map((cell) => (cell === null || cell === undefined ? '' : String(cell).trim()))
+        .filter((cell) => cell.length > 0),
+    )
+    .filter((row) => row.length > 0)
 }
 
 export type PasteReport<T> = {
   items: T[]
-  /** Lines that were skipped because they did not have enough columns. */
+  /** Rows skipped because they did not have enough cells. */
   skipped: number
 }
 
-/** `term <tab> definition` per line. */
-export function parsePairsPaste(text: string): PasteReport<PairItem> {
+/** `term | definition` per row. */
+export function rowsToPairs(rows: string[][]): PasteReport<PairItem> {
   const items: PairItem[] = []
   let skipped = 0
 
-  for (const line of toLines(text)) {
-    const columns = splitColumns(line)
-    const term = columns[0]
-    const definition = columns[1]
+  for (const row of rows) {
+    const term = row[0]
+    const definition = row[1]
     if (!term || !definition) {
       skipped += 1
       continue
@@ -52,18 +66,17 @@ export function parsePairsPaste(text: string): PasteReport<PairItem> {
 }
 
 /**
- * `question <tab> correct answer <tab> wrong <tab> wrong …` per line.
- * The first answer column is the correct one; it is shuffled into place when
- * the question is played, so its position here does not leak.
+ * `question | correct answer | wrong | wrong …` per row.
+ * The first answer cell is the correct one; it is shuffled into place when the
+ * question is played, so its position here does not leak.
  */
-export function parseMcqPaste(text: string): PasteReport<McqItem> {
+export function rowsToMcq(rows: string[][]): PasteReport<McqItem> {
   const items: McqItem[] = []
   let skipped = 0
 
-  for (const line of toLines(text)) {
-    const columns = splitColumns(line)
-    const question = columns[0]
-    const options = columns.slice(1)
+  for (const row of rows) {
+    const question = row[0]
+    const options = row.slice(1)
     if (!question || options.length < 2) {
       skipped += 1
       continue
@@ -75,17 +88,16 @@ export function parseMcqPaste(text: string): PasteReport<McqItem> {
 }
 
 /**
- * `group name <tab> item <tab> item …` per line. A group name that appears on
- * more than one line has its items merged, so a teacher can paste in batches.
+ * `group name | item | item …` per row. A group name appearing on more than
+ * one row has its items merged, so a teacher can paste or upload in batches.
  */
-export function parseGroupsPaste(text: string): PasteReport<Group> {
+export function rowsToGroups(rows: string[][]): PasteReport<Group> {
   const byName = new Map<string, string[]>()
   let skipped = 0
 
-  for (const line of toLines(text)) {
-    const columns = splitColumns(line)
-    const name = columns[0]
-    const items = columns.slice(1)
+  for (const row of rows) {
+    const name = row[0]
+    const items = row.slice(1)
     if (!name || items.length === 0) {
       skipped += 1
       continue
@@ -100,3 +112,7 @@ export function parseGroupsPaste(text: string): PasteReport<Group> {
     skipped,
   }
 }
+
+export const parsePairsPaste = (text: string) => rowsToPairs(textToRows(text))
+export const parseMcqPaste = (text: string) => rowsToMcq(textToRows(text))
+export const parseGroupsPaste = (text: string) => rowsToGroups(textToRows(text))

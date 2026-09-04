@@ -88,3 +88,36 @@ body {
     --color-brand-soft: #14313a;
   }
 }
+
+/*
+ * Worksheet printing. Screens get the app's palette; paper gets plain black on
+ * white, because a coloured background wastes a school printer's toner and
+ * light grey text does not survive the trip.
+ */
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .worksheet,
+  .worksheet * {
+    background: transparent !important;
+    color: #000 !important;
+    border-color: #000 !important;
+  }
+
+  .worksheet {
+    font-size: 12pt;
+  }
+
+  /* Never split a question across two sheets. */
+  .worksheet li {
+    break-inside: avoid;
+  }
+}

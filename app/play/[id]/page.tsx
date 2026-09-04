@@ -1,7 +1,10 @@
+import Script from 'next/script'
+
 import Link from 'next/link'
 
 import { LocaleProvider } from '@/components/LocaleProvider'
 import { GameShell } from '@/components/player/GameShell'
+import { PlayCounter } from '@/components/player/PlayCounter'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { gameLabel, gamesForSchema, resolveGame } from '@/lib/games'
 import { translator } from '@/lib/i18n'
@@ -25,7 +28,7 @@ export default async function PlayPage({
   const supabase = await createClient()
   const { data: activity } = await supabase
     .from('activities')
-    .select('id, title, schema_type, content, default_game, settings')
+    .select('id, title, schema_type, content, default_game, settings, is_public')
     .eq('id', id)
     .maybeSingle()
 
@@ -52,6 +55,7 @@ export default async function PlayPage({
   return (
     <LocaleProvider locale={locale}>
       <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-5 px-4 py-6">
+        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="afterInteractive" />
         <header className="flex flex-col gap-3">
           <h1 className="text-xl font-semibold text-ink">
             {activity.title || tt('dashboard.untitled')}
@@ -83,7 +87,10 @@ export default async function PlayPage({
           game={game}
           rawContent={activity.content}
           settings={parseSettings(activity.settings)}
+          activityId={activity.id}
         />
+
+        {activity.is_public ? <PlayCounter activityId={activity.id} /> : null}
       </main>
     </LocaleProvider>
   )

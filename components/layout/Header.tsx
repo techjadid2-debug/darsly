@@ -22,6 +22,9 @@ export function Header({
         </Link>
 
         <div className="flex items-center gap-2">
+          <ButtonLink href="/library" variant="ghost">
+            {tt('library.title')}
+          </ButtonLink>
           <LocaleSwitcher current={locale} />
           {signedIn ? (
             <>

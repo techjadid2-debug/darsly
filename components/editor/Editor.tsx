@@ -5,11 +5,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { saveActivity } from '@/app/actions/activities'
 import { BulkPasteDialog, type PasteResult } from '@/components/editor/BulkPasteDialog'
+import { ContentHelper } from '@/components/editor/ContentHelper'
 import { GameChips } from '@/components/editor/GameChips'
 import { GroupsTable } from '@/components/editor/GroupsTable'
 import { McqTable } from '@/components/editor/McqTable'
 import { PairsTable } from '@/components/editor/PairsTable'
+import { PublishPanel } from '@/components/editor/PublishPanel'
 import { SettingsPanel } from '@/components/editor/SettingsPanel'
+import { SharePanel } from '@/components/editor/SharePanel'
 import { useTranslate } from '@/components/LocaleProvider'
 import { GameShell } from '@/components/player/GameShell'
 import { Button } from '@/components/ui/Button'
@@ -97,6 +100,10 @@ export function Editor({
   initialContent,
   initialGameId,
   initialSettings,
+  initialSubject,
+  initialGrade,
+  initialIsPublic,
+  siteUrl,
 }: {
   id: string
   schemaType: EditableSchema
@@ -104,12 +111,19 @@ export function Editor({
   initialContent: unknown
   initialGameId: string
   initialSettings: ActivitySettings
+  initialSubject: string | null
+  initialGrade: string | null
+  initialIsPublic: boolean
+  siteUrl: string
 }) {
   const tt = useTranslate()
 
   const [title, setTitle] = useState(initialTitle)
   const [state, setState] = useState<Rows>(() => initialRows(schemaType, initialContent))
   const [settings, setSettings] = useState<ActivitySettings>(initialSettings)
+  const [subject, setSubject] = useState<string | null>(initialSubject)
+  const [grade, setGrade] = useState<string | null>(initialGrade)
+  const [isPublic, setIsPublic] = useState(initialIsPublic)
   const [gameId, setGameId] = useState(
     () => resolveGame(schemaType, initialGameId, initialGameId)?.id ?? initialGameId,
   )
@@ -124,8 +138,8 @@ export function Editor({
   // The serialized payload is the effect's dependency, so a re-render that
   // changes nothing does not restart the timer.
   const payload = useMemo(
-    () => ({ id, title, content, defaultGame: gameId, settings }),
-    [id, title, content, gameId, settings],
+    () => ({ id, title, content, defaultGame: gameId, settings, subject, grade, isPublic }),
+    [id, title, content, gameId, settings, subject, grade, isPublic],
   )
   const serialized = JSON.stringify(payload)
   const payloadRef = useRef(payload)
@@ -183,7 +197,28 @@ export function Editor({
           />
         </div>
 
+        <PublishPanel
+          subject={subject}
+          grade={grade}
+          isPublic={isPublic}
+          onChange={(patch) => {
+            if (patch.subject !== undefined) setSubject(patch.subject)
+            if (patch.grade !== undefined) setGrade(patch.grade)
+            if (patch.isPublic !== undefined) setIsPublic(patch.isPublic)
+          }}
+        />
+
         <SettingsPanel settings={settings} onChange={setSettings} />
+
+        <SharePanel activityId={id} isPublic={isPublic} siteUrl={siteUrl} />
+
+        <ContentHelper
+          activityId={id}
+          schemaType={schemaType}
+          onApply={(result, mode) =>
+            setState((previous) => applyPaste(previous, result, mode))
+          }
+        />
 
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-medium text-ink">{tt('editor.content')}</h2>

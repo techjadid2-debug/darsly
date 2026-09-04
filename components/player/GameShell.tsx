@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { useTranslate } from '@/components/LocaleProvider'
 import { GameRenderer } from '@/components/player/GameRenderer'
+import { ResultForm } from '@/components/player/ResultForm'
 import { Button } from '@/components/ui/Button'
 import type { GameEntry } from '@/lib/games'
 import type { GameResult } from '@/lib/game-types'
@@ -12,17 +13,21 @@ import type { ActivitySettings } from '@/lib/schemas'
 
 /**
  * Frames a game: runs it, then shows the score when it finishes.
- * `onResult` is where M6 will POST to /api/results.
+ *
+ * `activityId` turns the result screen into a submission form. The editor
+ * preview leaves it out, so practice runs never reach the results table.
  */
 export function GameShell({
   game,
   rawContent,
   settings,
+  activityId,
   onResult,
 }: {
   game: GameEntry
   rawContent: unknown
   settings: ActivitySettings
+  activityId?: string | undefined
   onResult?: (result: GameResult) => void
 }) {
   const tt = useTranslate()
@@ -50,6 +55,12 @@ export function GameShell({
         <p className="mt-1 text-sm text-ink-soft">
           {tt('play.done.time', { sec: result.durationSec })}
         </p>
+        {activityId ? (
+          <div className="mt-6 text-left">
+            <ResultForm activityId={activityId} gameId={game.id} result={result} />
+          </div>
+        ) : null}
+
         <div className="mt-6 flex justify-center">
           <Button
             size="lg"

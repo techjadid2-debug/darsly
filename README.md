@@ -62,6 +62,8 @@ Migrations live in `supabase/migrations/` and are the source of truth.
   `updated_at` trigger; the signup trigger that creates a profile row; RLS.
 - `0002_harden_functions.sql` — pins `search_path` and revokes public `EXECUTE`
   on the trigger functions.
+- `0003_play_count_rpc.sql` — `increment_play_count`, the one write an anonymous
+  player is allowed to make.
 
 RLS in one line: owners have full access to their activities, anyone (including
 anonymous visitors) can read public ones, anyone can submit a result to an
@@ -74,7 +76,41 @@ activity they are allowed to play, and only the owner can read results back.
 | M1 | Setup, auth, migrations, RLS, empty dashboard, first deploy | done |
 | M2 | zod schemas, game registry, editor (pairs + mcq), quiz + match-up, `/play` | done |
 | M3 | Remaining 4 games, game switching, settings (timer, shuffle) | done |
-| M4 | Content helper: schema converters, CSV/XLSX import, templates | |
-| M5 | `/library`, `is_public`, search/filter, `play_count` | |
-| M6 | `/embed`, `/print`, `/api/results` + results view | |
-| M7 | Telegram Mini App support | |
+| M4 | Content helper: schema converters, CSV/XLSX import, templates | done |
+| M5 | `/library`, `is_public`, search/filter, `play_count` | done |
+| M6 | `/embed`, `/print`, `/api/results` + results view | done |
+| M7 | Telegram Mini App support | done |
+
+## Content generation, without a model
+
+There is no LLM in this project. `lib/converters.ts` turns content a teacher
+already has into another schema — pairs into multiple choice (wrong options are
+drawn from the other rows' definitions), multiple choice back into pairs,
+grouped items into "which group?" questions. Everything is seeded off the
+source item's id, so converting twice gives the same activity, and a converted
+activity is always a **new** row: the source is never touched.
+
+Alongside it, `lib/import-file.ts` reads CSV and .xlsx in the browser and
+`lib/templates.ts` ships starter sets. Bulk paste, file upload and templates all
+funnel through the same `rowsTo*` functions in `lib/parse.ts`.
+
+## Telegram Mini App
+
+`/play` and `/embed` load `telegram-web-app.js`. When a result is submitted from
+inside Telegram the signed `initData` blob rides along, and `lib/telegram.ts`
+verifies it server-side (HMAC-SHA256 under the `WebAppData` key, plus a 24-hour
+freshness check) before any `player_tg_id` is stored. A payload that fails
+verification is not an error — the result is simply recorded as an ordinary
+anonymous one, so a forged blob gains nothing. The bot itself is not built here.
+
+## Known advisor warnings
+
+`increment_play_count` is reported by the Supabase linter as a `SECURITY
+DEFINER` function callable by `anon`. That is deliberate and is the point of the
+function: an anonymous player must be able to count a play. It does exactly one
+thing, only to a public activity, with `search_path` pinned.
+
+Supabase's *leaked password protection* is off. The app itself never shows a
+password form — auth is magic link and Google — but the password grant is still
+enabled at the Supabase API level, so turning the setting on in the dashboard is
+worth doing.

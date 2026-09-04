@@ -4,9 +4,11 @@ import { redirect } from 'next/navigation'
 import { Editor, type EditableSchema } from '@/components/editor/Editor'
 import { Header } from '@/components/layout/Header'
 import { LocaleProvider } from '@/components/LocaleProvider'
+import { ResultsTable } from '@/components/ResultsTable'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { translator } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
+import { getSiteUrl } from '@/lib/site-url'
 import { isSchemaType, parseSettings } from '@/lib/schemas'
 import { createClient } from '@/lib/supabase/server'
 
@@ -16,12 +18,16 @@ function isEditable(schemaType: string): schemaType is EditableSchema {
 
 export default async function EditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ error?: string }>
 }) {
   const { id } = await params
+  const { error: pageError } = await searchParams
   const locale = await getLocale()
   const tt = translator(locale)
+  const siteUrl = await getSiteUrl()
 
   const supabase = await createClient()
   const {
@@ -33,10 +39,20 @@ export default async function EditPage({
   // anyone open the editor on someone else's public activity.
   const { data: activity } = await supabase
     .from('activities')
-    .select('id, title, schema_type, content, default_game, settings')
+    .select('id, title, schema_type, content, default_game, settings, subject, grade, is_public')
     .eq('id', id)
     .eq('owner_id', user.id)
     .maybeSingle()
+
+  // Owner-only by RLS: the results policy checks the activity's owner_id.
+  const { data: results } = activity
+    ? await supabase
+        .from('results')
+        .select('id, player_name, game, score, max_score, duration_sec, created_at')
+        .eq('activity_id', id)
+        .order('created_at', { ascending: false })
+        .limit(100)
+    : { data: null }
 
   const notFound = (
     <div className="mx-auto w-full max-w-3xl px-4 py-10">
@@ -62,14 +78,35 @@ export default async function EditPage({
           !isEditable(activity.schema_type) ? (
             notFound
           ) : (
-            <Editor
-              id={activity.id}
-              schemaType={activity.schema_type}
-              initialTitle={activity.title}
-              initialContent={activity.content}
-              initialGameId={activity.default_game}
-              initialSettings={parseSettings(activity.settings)}
-            />
+            <>
+              {pageError === 'convert' ? (
+                <div className="mb-4">
+                  <ErrorState
+                    title={tt('convert.error.failed')}
+                    body={tt('helper.convert.hint')}
+                  />
+                </div>
+              ) : null}
+              <Editor
+                id={activity.id}
+                schemaType={activity.schema_type}
+                initialTitle={activity.title}
+                initialContent={activity.content}
+                initialGameId={activity.default_game}
+                initialSettings={parseSettings(activity.settings)}
+                initialSubject={activity.subject}
+                initialGrade={activity.grade}
+                initialIsPublic={activity.is_public}
+                siteUrl={siteUrl}
+              />
+
+              <section className="mt-10">
+                <h2 className="mb-3 text-lg font-semibold text-ink">
+                  {tt('results.title')}
+                </h2>
+                <ResultsTable rows={results ?? []} locale={locale} />
+              </section>
+            </>
           )}
         </main>
       </div>
