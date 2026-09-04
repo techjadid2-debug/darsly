@@ -1,8 +1,10 @@
 /**
  * Every user-facing string in the app lives here. No hardcoded text in JSX.
  *
- * `uz` is the source of truth: `ru` is typed as Record<UzKey, string>, so
+ * `uz` is the source of truth: `ru` is typed as Record<TKey, string>, so
  * TypeScript fails the build the moment a key is added to uz and forgotten in ru.
+ *
+ * Placeholders are written `{name}` and filled by passing params to `t`.
  */
 
 export const locales = ['uz', 'ru'] as const
@@ -20,6 +22,8 @@ const uz = {
   'common.loading': 'Yuklanmoqda…',
   'common.language': 'Til',
   'common.dashboard': 'Mashqlarim',
+  'common.cancel': 'Bekor qilish',
+  'common.back': 'Orqaga',
 
   'hero.title': 'Bir marta kiriting — oltita o‘yin chiqsin',
   'hero.subtitle':
@@ -73,6 +77,81 @@ const uz = {
   'dashboard.empty.cta': 'Birinchi mashqni yaratish',
   'dashboard.error.title': 'Mashqlarni yuklab bo‘lmadi',
   'dashboard.error.body': 'Ulanishni tekshiring va qayta urinib ko‘ring.',
+  'dashboard.untitled': 'Nomsiz mashq',
+  'dashboard.itemCount': '{n} ta element',
+  'dashboard.edit': 'Tahrirlash',
+  'dashboard.play': 'O‘ynash',
+
+  'create.title': 'Yangi mashq',
+  'create.subtitle':
+    'Kontent turini tanlang. Uni keyin mos keladigan istalgan o‘yin bilan o‘ynatasiz.',
+  'create.failed': 'Mashq yaratilmadi. Qayta urinib ko‘ring.',
+  'schema.pairs.name': 'So‘z juftliklari',
+  'schema.pairs.hint':
+    'Atama va uning ta’rifi. Moslashtirish, kartochka va anagramma uchun.',
+  'schema.mcq.name': 'Test savollari',
+  'schema.mcq.hint': 'Savol va javob variantlari. Viktorina uchun.',
+
+  'editor.titleLabel': 'Sarlavha',
+  'editor.titlePlaceholder': 'Masalan: 5-sinf ingliz tili, 3-dars',
+  'editor.content': 'Kontent',
+  'editor.preview': 'Ko‘rinishi',
+  'editor.addRow': 'Qator qo‘shish',
+  'editor.remove': 'O‘chirish',
+  'editor.moveUp': 'Yuqoriga surish',
+  'editor.moveDown': 'Pastga surish',
+  'editor.bulkPaste': 'Excel’dan joylashtirish',
+  'editor.saving': 'Saqlanmoqda…',
+  'editor.saved': 'Saqlandi',
+  'editor.saveFailed': 'Saqlanmadi — qayta urinilmoqda',
+  'editor.play': 'O‘ynash',
+  'editor.emptyPreview': 'Ko‘rish uchun kamida bitta qator kiriting.',
+  'editor.term': 'Atama',
+  'editor.definition': 'Ta’rif',
+  'editor.question': 'Savol',
+  'editor.option': 'Variant {n}',
+  'editor.correctAnswer': 'To‘g‘ri javob',
+  'editor.markCorrect': 'To‘g‘ri deb belgilash',
+  'editor.addOption': 'Variant qo‘shish',
+  'editor.removeOption': 'Variantni o‘chirish',
+  'editor.rowLabel': '{n}-qator',
+  'editor.notFound': 'Mashq topilmadi',
+  'editor.notFoundBody': 'Bu mashq o‘chirilgan yoki sizga tegishli emas.',
+
+  'paste.title': 'Excel’dan joylashtirish',
+  'paste.pairsHint':
+    'Har qatorda avval atama, keyin ta’rif. Excel’dagi ikkita ustunni nusxalab, shu yerga joylashtiring.',
+  'paste.mcqHint':
+    'Har qatorda avval savol, keyin to‘g‘ri javob, keyin noto‘g‘ri variantlar.',
+  'paste.placeholder': 'Shu yerga joylashtiring…',
+  'paste.append': 'Qo‘shish',
+  'paste.replace': 'Butunlay almashtirish',
+  'paste.summary': '{found} ta qator topildi, {skipped} tasi o‘tkazib yuborildi.',
+  'paste.nothing': 'Hech qanday to‘liq qator topilmadi.',
+
+  'play.progress': '{current} / {total}',
+  'play.score': 'Ball: {score}',
+  'play.correct': 'To‘g‘ri!',
+  'play.wrong': 'Noto‘g‘ri',
+  'play.next': 'Keyingi',
+  'play.check': 'Tekshirish',
+  'play.finish': 'Yakunlash',
+  'play.restart': 'Qaytadan o‘ynash',
+  'play.done.title': 'Tugadi!',
+  'play.done.score': '{score} / {max} ball',
+  'play.done.time': '{sec} soniyada',
+  'play.empty.title': 'Bu mashq hali bo‘sh',
+  'play.empty.body': 'Egasi hali kontent qo‘shmagan.',
+  'play.invalid.title': 'Kontent o‘qib bo‘lmadi',
+  'play.invalid.body': 'Mashq kontenti buzilgan. Egasi uni tahrirlab tuzatishi kerak.',
+  'play.notFound.title': 'Mashq topilmadi',
+  'play.notFound.body': 'Havola noto‘g‘ri, yoki bu mashq hammaga ochiq emas.',
+  'play.chooseGame': 'O‘yinni tanlang',
+
+  'matchup.instruction': 'Ta’rifni to‘g‘ri atama yoniga tashlang.',
+  'matchup.dropHere': 'Bu yerga tashlang',
+  'matchup.pool': 'Ta’riflar',
+  'matchup.remaining': 'Qoldi: {n}',
 } as const
 
 export type TKey = keyof typeof uz
@@ -87,6 +166,8 @@ const ru: Record<TKey, string> = {
   'common.loading': 'Загрузка…',
   'common.language': 'Язык',
   'common.dashboard': 'Мои задания',
+  'common.cancel': 'Отмена',
+  'common.back': 'Назад',
 
   'hero.title': 'Введите один раз — получите шесть игр',
   'hero.subtitle':
@@ -135,23 +216,110 @@ const ru: Record<TKey, string> = {
   'dashboard.title': 'Мои задания',
   'dashboard.new': 'Новое задание',
   'dashboard.empty.title': 'Заданий пока нет',
-  'dashboard.empty.body':
-    'Создайте первое задание — это займёт пару минут.',
+  'dashboard.empty.body': 'Создайте первое задание — это займёт пару минут.',
   'dashboard.empty.cta': 'Создать первое задание',
   'dashboard.error.title': 'Не удалось загрузить задания',
   'dashboard.error.body': 'Проверьте соединение и попробуйте снова.',
+  'dashboard.untitled': 'Без названия',
+  'dashboard.itemCount': 'Элементов: {n}',
+  'dashboard.edit': 'Редактировать',
+  'dashboard.play': 'Играть',
+
+  'create.title': 'Новое задание',
+  'create.subtitle':
+    'Выберите тип материала. Потом сыграете в него любой подходящей игрой.',
+  'create.failed': 'Не удалось создать задание. Попробуйте ещё раз.',
+  'schema.pairs.name': 'Пары слов',
+  'schema.pairs.hint':
+    'Термин и его определение. Для сопоставления, карточек и анаграммы.',
+  'schema.mcq.name': 'Тестовые вопросы',
+  'schema.mcq.hint': 'Вопрос и варианты ответа. Для викторины.',
+
+  'editor.titleLabel': 'Название',
+  'editor.titlePlaceholder': 'Например: 5 класс, английский, урок 3',
+  'editor.content': 'Материал',
+  'editor.preview': 'Предпросмотр',
+  'editor.addRow': 'Добавить строку',
+  'editor.remove': 'Удалить',
+  'editor.moveUp': 'Переместить вверх',
+  'editor.moveDown': 'Переместить вниз',
+  'editor.bulkPaste': 'Вставить из Excel',
+  'editor.saving': 'Сохраняем…',
+  'editor.saved': 'Сохранено',
+  'editor.saveFailed': 'Не сохранено — повторяем',
+  'editor.play': 'Играть',
+  'editor.emptyPreview': 'Добавьте хотя бы одну строку, чтобы увидеть игру.',
+  'editor.term': 'Термин',
+  'editor.definition': 'Определение',
+  'editor.question': 'Вопрос',
+  'editor.option': 'Вариант {n}',
+  'editor.correctAnswer': 'Правильный ответ',
+  'editor.markCorrect': 'Отметить правильным',
+  'editor.addOption': 'Добавить вариант',
+  'editor.removeOption': 'Удалить вариант',
+  'editor.rowLabel': 'Строка {n}',
+  'editor.notFound': 'Задание не найдено',
+  'editor.notFoundBody': 'Оно удалено или принадлежит другому пользователю.',
+
+  'paste.title': 'Вставить из Excel',
+  'paste.pairsHint':
+    'В каждой строке сначала термин, затем определение. Скопируйте два столбца из Excel и вставьте сюда.',
+  'paste.mcqHint':
+    'В каждой строке сначала вопрос, затем правильный ответ, затем неправильные варианты.',
+  'paste.placeholder': 'Вставьте сюда…',
+  'paste.append': 'Добавить',
+  'paste.replace': 'Заменить полностью',
+  'paste.summary': 'Найдено строк: {found}, пропущено: {skipped}.',
+  'paste.nothing': 'Не найдено ни одной полной строки.',
+
+  'play.progress': '{current} / {total}',
+  'play.score': 'Очки: {score}',
+  'play.correct': 'Правильно!',
+  'play.wrong': 'Неправильно',
+  'play.next': 'Далее',
+  'play.check': 'Проверить',
+  'play.finish': 'Завершить',
+  'play.restart': 'Играть снова',
+  'play.done.title': 'Готово!',
+  'play.done.score': '{score} / {max} очков',
+  'play.done.time': 'за {sec} секунд',
+  'play.empty.title': 'Задание пока пустое',
+  'play.empty.body': 'Автор ещё не добавил материал.',
+  'play.invalid.title': 'Не удалось прочитать материал',
+  'play.invalid.body':
+    'Материал повреждён. Автору нужно исправить его в редакторе.',
+  'play.notFound.title': 'Задание не найдено',
+  'play.notFound.body': 'Ссылка неверна, или задание закрыто для всех.',
+  'play.chooseGame': 'Выберите игру',
+
+  'matchup.instruction': 'Перетащите определение к нужному термину.',
+  'matchup.dropHere': 'Перетащите сюда',
+  'matchup.pool': 'Определения',
+  'matchup.remaining': 'Осталось: {n}',
 }
 
 const dict: Record<Locale, Record<TKey, string>> = { uz, ru }
 
-export function t(key: TKey, locale: Locale = defaultLocale): string {
-  return dict[locale][key]
+export type TParams = Record<string, string | number>
+
+function fill(template: string, params?: TParams): string {
+  if (!params) return template
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => {
+    const value = params[name]
+    return value === undefined ? match : String(value)
+  })
+}
+
+export function t(key: TKey, locale: Locale = defaultLocale, params?: TParams): string {
+  return fill(dict[locale][key], params)
 }
 
 /** Bind a locale once, then call `tt('some.key')` inside a component. */
 export function translator(locale: Locale) {
-  return (key: TKey): string => dict[locale][key]
+  return (key: TKey, params?: TParams): string => fill(dict[locale][key], params)
 }
+
+export type Translate = ReturnType<typeof translator>
 
 export function isLocale(value: string | undefined): value is Locale {
   return value === 'uz' || value === 'ru'

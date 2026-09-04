@@ -37,6 +37,7 @@ never writes to `activities` directly.
 pnpm install
 cp .env.example .env.local   # fill in the three values
 pnpm dev
+pnpm test                    # unit tests for the content logic
 ```
 
 | Variable | Notes |
@@ -68,7 +69,7 @@ activity they are allowed to play, and only the owner can read results back.
 | | Scope | Status |
 |---|---|---|
 | M1 | Setup, auth, migrations, RLS, empty dashboard, first deploy | done |
-| M2 | zod schemas, game registry, editor (pairs + mcq), quiz + match-up, `/play` | |
+| M2 | zod schemas, game registry, editor (pairs + mcq), quiz + match-up, `/play` | done |
 | M3 | Remaining 4 games, game switching, settings (timer, shuffle) | |
 | M4 | Content helper: schema converters, CSV/XLSX import, templates | |
 | M5 | `/library`, `is_public`, search/filter, `play_count` | |
