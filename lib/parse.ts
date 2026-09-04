@@ -1,5 +1,5 @@
 import { makeId } from '@/lib/ids'
-import type { McqItem, PairItem } from '@/lib/schemas'
+import type { Group, McqItem, PairItem } from '@/lib/schemas'
 
 /**
  * Bulk paste. Teachers will not type twenty rows by hand — they paste from
@@ -72,4 +72,31 @@ export function parseMcqPaste(text: string): PasteReport<McqItem> {
   }
 
   return { items, skipped }
+}
+
+/**
+ * `group name <tab> item <tab> item …` per line. A group name that appears on
+ * more than one line has its items merged, so a teacher can paste in batches.
+ */
+export function parseGroupsPaste(text: string): PasteReport<Group> {
+  const byName = new Map<string, string[]>()
+  let skipped = 0
+
+  for (const line of toLines(text)) {
+    const columns = splitColumns(line)
+    const name = columns[0]
+    const items = columns.slice(1)
+    if (!name || items.length === 0) {
+      skipped += 1
+      continue
+    }
+    const existing = byName.get(name)
+    if (existing) existing.push(...items)
+    else byName.set(name, [...items])
+  }
+
+  return {
+    items: [...byName.entries()].map(([name, items]) => ({ name, items })),
+    skipped,
+  }
 }

@@ -11,7 +11,7 @@ import { isSchemaType, parseSettings } from '@/lib/schemas'
 import { createClient } from '@/lib/supabase/server'
 
 function isEditable(schemaType: string): schemaType is EditableSchema {
-  return schemaType === 'pairs' || schemaType === 'mcq'
+  return schemaType === 'pairs' || schemaType === 'mcq' || schemaType === 'groups'
 }
 
 export default async function EditPage({
@@ -68,7 +68,7 @@ export default async function EditPage({
               initialTitle={activity.title}
               initialContent={activity.content}
               initialGameId={activity.default_game}
-              settings={parseSettings(activity.settings)}
+              initialSettings={parseSettings(activity.settings)}
             />
           )}
         </main>

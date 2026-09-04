@@ -19,6 +19,9 @@ Four content schemas, defined as zod schemas in `lib/schemas.ts` (M2):
 | `groups`   | `{ groups: [{ name, items: string[] }] }` |
 | `sequence` | `{ items: [{ id, text, blanks: number[] }] }` |
 
+`sequence` is defined but no MVP game consumes it, so `/create` does not offer
+it yet — an activity of that type would have nothing to play it with.
+
 Games are registered in `lib/games.ts`. Adding game #7 means adding one file
 under `components/games/<name>/index.tsx` plus one registry entry — nothing else.
 
@@ -70,7 +73,7 @@ activity they are allowed to play, and only the owner can read results back.
 |---|---|---|
 | M1 | Setup, auth, migrations, RLS, empty dashboard, first deploy | done |
 | M2 | zod schemas, game registry, editor (pairs + mcq), quiz + match-up, `/play` | done |
-| M3 | Remaining 4 games, game switching, settings (timer, shuffle) | |
+| M3 | Remaining 4 games, game switching, settings (timer, shuffle) | done |
 | M4 | Content helper: schema converters, CSV/XLSX import, templates | |
 | M5 | `/library`, `is_public`, search/filter, `play_count` | |
 | M6 | `/embed`, `/print`, `/api/results` + results view | |

@@ -16,7 +16,9 @@ import {
 import { useMemo, useState } from 'react'
 
 import { useTranslate } from '@/components/LocaleProvider'
+import { Timer } from '@/components/player/Timer'
 import { Button } from '@/components/ui/Button'
+import { useGameClock } from '@/lib/use-game-clock'
 import type { GameProps } from '@/lib/game-types'
 import type { PairsContent } from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
@@ -138,7 +140,6 @@ export default function MatchUp({
     [content.items],
   )
 
-  const [startedAt] = useState(() => Date.now())
   const [placement, setPlacement] = useState<Placement>({})
   const [dragging, setDragging] = useState<string | null>(null)
   const [checked, setChecked] = useState(false)
@@ -158,6 +159,11 @@ export default function MatchUp({
   const pool = definitions.filter((pair) => !placedIds.has(pair.id))
   const allPlaced = pairs.length > 0 && pool.length === 0
   const score = pairs.filter((pair) => placement[pair.id] === pair.id).length
+
+  // Time up scores whatever is already placed correctly.
+  const { remaining, elapsedSec } = useGameClock(settings, () => {
+    onFinish({ score, maxScore: pairs.length, durationSec: elapsedSec() })
+  })
 
   function handleDragStart(event: DragStartEvent) {
     setDragging(String(event.active.id))
@@ -203,7 +209,10 @@ export default function MatchUp({
       <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between gap-3 text-sm text-ink-soft">
           <span>{tt('matchup.instruction')}</span>
-          <span className="shrink-0">{tt('matchup.remaining', { n: pool.length })}</span>
+          <span className="flex shrink-0 items-center gap-2">
+            <Timer remaining={remaining} />
+            {tt('matchup.remaining', { n: pool.length })}
+          </span>
         </div>
 
         <ul className="flex flex-col gap-3">
@@ -250,11 +259,7 @@ export default function MatchUp({
             <Button
               size="lg"
               onClick={() =>
-                onFinish({
-                  score,
-                  maxScore: pairs.length,
-                  durationSec: Math.round((Date.now() - startedAt) / 1000),
-                })
+                onFinish({ score, maxScore: pairs.length, durationSec: elapsedSec() })
               }
             >
               {tt('play.finish')}

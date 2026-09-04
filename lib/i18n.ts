@@ -152,6 +152,44 @@ const uz = {
   'matchup.dropHere': 'Bu yerga tashlang',
   'matchup.pool': 'Ta’riflar',
   'matchup.remaining': 'Qoldi: {n}',
+  'schema.groups.name': 'Kategoriyalar',
+  'schema.groups.hint': 'Guruh nomlari va ularga tegishli elementlar. Guruhlarga ajratish uchun.',
+
+  'editor.groupName': 'Guruh nomi',
+  'editor.groupItems': 'Elementlar — har qatorda bittadan',
+  'editor.addGroup': 'Guruh qo‘shish',
+  'editor.groupLabel': '{n}-guruh',
+  'paste.groupsHint':
+    'Har qatorda avval guruh nomi, keyin unga tegishli elementlar. Bir guruh nomi bir necha marta uchrasa, elementlar birlashtiriladi.',
+
+  'settings.title': 'Sozlamalar',
+  'settings.timer': 'Vaqt chegarasi',
+  'settings.timerOff': 'Yo‘q',
+  'settings.timerValue': '{n} soniya',
+  'settings.shuffle': 'Tartibni aralashtirish',
+  'settings.showAnswers': 'To‘g‘ri javobni ko‘rsatish',
+  'settings.theme': 'Ranglar',
+  'theme.default': 'Odatiy',
+  'theme.warm': 'Iliq',
+  'theme.cool': 'Salqin',
+
+  'play.timeLeft': '{sec} s',
+  'play.timeUp': 'Vaqt tugadi',
+
+  'flash.tapToFlip': 'Javobni ko‘rish uchun bosing',
+  'flash.knew': 'Bildim',
+  'flash.didnt': 'Bilmadim',
+  'flash.known': 'Bilganlar: {n}',
+
+  'memory.instruction': 'Ikkita katakchani oching va juftini toping.',
+  'memory.found': 'Topilgan juftlar: {found} / {total}',
+
+  'groupsort.instruction': 'Har bir elementni to‘g‘ri guruhga tashlang.',
+  'groupsort.pool': 'Elementlar',
+
+  'anagram.instruction': 'Harflarni surib, to‘g‘ri so‘zni yig‘ing.',
+  'anagram.hint': 'Yordam: {hint}',
+  'anagram.progress': 'So‘z {current} / {total}',
 } as const
 
 export type TKey = keyof typeof uz
@@ -296,6 +334,45 @@ const ru: Record<TKey, string> = {
   'matchup.dropHere': 'Перетащите сюда',
   'matchup.pool': 'Определения',
   'matchup.remaining': 'Осталось: {n}',
+  'schema.groups.name': 'Категории',
+  'schema.groups.hint':
+    'Названия групп и относящиеся к ним элементы. Для сортировки по группам.',
+
+  'editor.groupName': 'Название группы',
+  'editor.groupItems': 'Элементы — по одному в строке',
+  'editor.addGroup': 'Добавить группу',
+  'editor.groupLabel': 'Группа {n}',
+  'paste.groupsHint':
+    'В каждой строке сначала название группы, затем её элементы. Если название повторяется, элементы объединяются.',
+
+  'settings.title': 'Настройки',
+  'settings.timer': 'Ограничение времени',
+  'settings.timerOff': 'Нет',
+  'settings.timerValue': '{n} секунд',
+  'settings.shuffle': 'Перемешивать порядок',
+  'settings.showAnswers': 'Показывать правильный ответ',
+  'settings.theme': 'Цвета',
+  'theme.default': 'Обычные',
+  'theme.warm': 'Тёплые',
+  'theme.cool': 'Холодные',
+
+  'play.timeLeft': '{sec} с',
+  'play.timeUp': 'Время вышло',
+
+  'flash.tapToFlip': 'Нажмите, чтобы увидеть ответ',
+  'flash.knew': 'Знал',
+  'flash.didnt': 'Не знал',
+  'flash.known': 'Знал: {n}',
+
+  'memory.instruction': 'Открывайте по две карточки и находите пары.',
+  'memory.found': 'Найдено пар: {found} / {total}',
+
+  'groupsort.instruction': 'Перетащите каждый элемент в нужную группу.',
+  'groupsort.pool': 'Элементы',
+
+  'anagram.instruction': 'Переставьте буквы и соберите слово.',
+  'anagram.hint': 'Подсказка: {hint}',
+  'anagram.progress': 'Слово {current} / {total}',
 }
 
 const dict: Record<Locale, Record<TKey, string>> = { uz, ru }

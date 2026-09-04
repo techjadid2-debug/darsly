@@ -1,9 +1,15 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { moveRow, toMcqContent, toPairsContent } from '@/lib/drafts'
-import { parseMcqPaste, parsePairsPaste, splitColumns } from '@/lib/parse'
-import { mcqContentSchema, pairsContentSchema, countItems } from '@/lib/schemas'
+import { moveRow, toGroupsContent, toMcqContent, toPairsContent } from '@/lib/drafts'
+import { parseGroupsPaste, parseMcqPaste, parsePairsPaste, splitColumns } from '@/lib/parse'
+import {
+  countItems,
+  groupsContentSchema,
+  mcqContentSchema,
+  pairsContentSchema,
+  parseSettings,
+} from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
 
 // ── bulk paste ────────────────────────────────────────────────────────────────
@@ -136,4 +142,53 @@ test('countItems handles every schema and rejects junk', () => {
     3,
   )
   assert.equal(countItems('pairs', { nonsense: true }), 0)
+})
+
+// ── groups ────────────────────────────────────────────────────────────────────
+
+test('groups paste merges items when a group name repeats', () => {
+  const { items, skipped } = parseGroupsPaste(
+    'Mevalar\tolma\tanor\nSabzavotlar\tsabzi\nMevalar\tuzum',
+  )
+  assert.equal(skipped, 0)
+  assert.equal(items.length, 2, 'the repeated name produces one group, not two')
+  assert.deepEqual(items[0], { name: 'Mevalar', items: ['olma', 'anor', 'uzum'] })
+  assert.deepEqual(items[1], { name: 'Sabzavotlar', items: ['sabzi'] })
+})
+
+test('groups paste skips a line with a name but no items', () => {
+  const { items, skipped } = parseGroupsPaste('Mevalar\tolma\nBo‘sh guruh')
+  assert.equal(items.length, 1)
+  assert.equal(skipped, 1)
+})
+
+test('a group with no name or no items is not saved', () => {
+  const content = toGroupsContent([
+    { id: '1', name: 'Mevalar', itemsText: 'olma\n\n  anor  \n' },
+    { id: '2', name: '', itemsText: 'orphan' },
+    { id: '3', name: 'Bo‘sh', itemsText: '   ' },
+  ])
+  assert.equal(content.groups.length, 1)
+  assert.deepEqual(content.groups[0], { name: 'Mevalar', items: ['olma', 'anor'] })
+  assert.ok(groupsContentSchema.safeParse(content).success)
+})
+
+// ── settings ──────────────────────────────────────────────────────────────────
+
+test('settings fall back to defaults and reject out-of-range values', () => {
+  assert.deepEqual(parseSettings(undefined), {
+    timer: 0,
+    shuffle: true,
+    show_answers: true,
+    theme: 'default',
+  })
+  assert.deepEqual(parseSettings({ timer: 60, shuffle: false, show_answers: true, theme: 'warm' }), {
+    timer: 60,
+    shuffle: false,
+    show_answers: true,
+    theme: 'warm',
+  })
+  // A junk theme invalidates the document, so the whole thing resets to defaults.
+  assert.equal(parseSettings({ theme: 'neon' }).theme, 'default')
+  assert.equal(parseSettings({ timer: -5 }).timer, 0)
 })

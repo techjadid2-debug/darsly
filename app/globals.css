@@ -58,3 +58,33 @@ body {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
+
+/*
+ * Per-activity colour themes. `settings.theme` sets data-theme-variant on the
+ * game container, which re-points the brand tokens for everything inside it.
+ */
+[data-theme-variant='warm'] {
+  --color-brand: #c2571f;
+  --color-brand-hover: #a8481a;
+  --color-brand-soft: #fbeade;
+}
+
+[data-theme-variant='cool'] {
+  --color-brand: #16748c;
+  --color-brand-hover: #115e73;
+  --color-brand-soft: #e0f0f4;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme-variant='warm'] {
+    --color-brand: #e8935c;
+    --color-brand-hover: #f0a877;
+    --color-brand-soft: #3a2418;
+  }
+
+  [data-theme-variant='cool'] {
+    --color-brand: #5cb8d0;
+    --color-brand-hover: #7cc9dd;
+    --color-brand-soft: #14313a;
+  }
+}

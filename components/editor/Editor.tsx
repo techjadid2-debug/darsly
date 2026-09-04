@@ -4,36 +4,44 @@ import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { saveActivity } from '@/app/actions/activities'
-import { BulkPasteDialog } from '@/components/editor/BulkPasteDialog'
+import { BulkPasteDialog, type PasteResult } from '@/components/editor/BulkPasteDialog'
 import { GameChips } from '@/components/editor/GameChips'
+import { GroupsTable } from '@/components/editor/GroupsTable'
 import { McqTable } from '@/components/editor/McqTable'
 import { PairsTable } from '@/components/editor/PairsTable'
+import { SettingsPanel } from '@/components/editor/SettingsPanel'
 import { useTranslate } from '@/components/LocaleProvider'
 import { GameShell } from '@/components/player/GameShell'
 import { Button } from '@/components/ui/Button'
 import {
+  emptyGroupDraft,
   emptyMcqDraft,
   emptyPairDraft,
+  groupDraftsFrom,
   mcqDraftsFrom,
   pairDraftsFrom,
+  toGroupsContent,
   toMcqContent,
   toPairsContent,
+  type GroupDraft,
   type McqDraft,
   type PairDraft,
 } from '@/lib/drafts'
 import { gamesForSchema, getGame, resolveGame } from '@/lib/games'
 import {
+  groupsContentSchema,
   mcqContentSchema,
   pairsContentSchema,
   type ActivitySettings,
 } from '@/lib/schemas'
 
-/** Schemas the editor can edit today. M3 widens this to all four. */
-export type EditableSchema = 'pairs' | 'mcq'
+/** Schemas the editor can edit. `sequence` has no game in the MVP set. */
+export type EditableSchema = 'pairs' | 'mcq' | 'groups'
 
 type Rows =
   | { schemaType: 'pairs'; rows: PairDraft[] }
   | { schemaType: 'mcq'; rows: McqDraft[] }
+  | { schemaType: 'groups'; rows: GroupDraft[] }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -43,17 +51,43 @@ function initialRows(schemaType: EditableSchema, raw: unknown): Rows {
   if (schemaType === 'pairs') {
     const parsed = pairsContentSchema.safeParse(raw)
     const rows = parsed.success ? pairDraftsFrom(parsed.data) : []
-    return { schemaType: 'pairs', rows: rows.length ? rows : [emptyPairDraft()] }
+    return { schemaType, rows: rows.length ? rows : [emptyPairDraft()] }
   }
-  const parsed = mcqContentSchema.safeParse(raw)
-  const rows = parsed.success ? mcqDraftsFrom(parsed.data) : []
-  return { schemaType: 'mcq', rows: rows.length ? rows : [emptyMcqDraft()] }
+  if (schemaType === 'mcq') {
+    const parsed = mcqContentSchema.safeParse(raw)
+    const rows = parsed.success ? mcqDraftsFrom(parsed.data) : []
+    return { schemaType, rows: rows.length ? rows : [emptyMcqDraft()] }
+  }
+  const parsed = groupsContentSchema.safeParse(raw)
+  const rows = parsed.success ? groupDraftsFrom(parsed.data) : []
+  return { schemaType, rows: rows.length ? rows : [emptyGroupDraft(), emptyGroupDraft()] }
 }
 
 function contentOf(state: Rows): unknown {
-  return state.schemaType === 'pairs'
-    ? toPairsContent(state.rows)
-    : toMcqContent(state.rows)
+  switch (state.schemaType) {
+    case 'pairs':
+      return toPairsContent(state.rows)
+    case 'mcq':
+      return toMcqContent(state.rows)
+    case 'groups':
+      return toGroupsContent(state.rows)
+  }
+}
+
+function applyPaste(previous: Rows, result: PasteResult, mode: 'append' | 'replace'): Rows {
+  if (previous.schemaType === 'pairs' && result.schemaType === 'pairs') {
+    const existing = mode === 'replace' ? [] : previous.rows
+    return { schemaType: 'pairs', rows: [...existing, ...result.rows] }
+  }
+  if (previous.schemaType === 'mcq' && result.schemaType === 'mcq') {
+    const existing = mode === 'replace' ? [] : previous.rows
+    return { schemaType: 'mcq', rows: [...existing, ...result.rows] }
+  }
+  if (previous.schemaType === 'groups' && result.schemaType === 'groups') {
+    const existing = mode === 'replace' ? [] : previous.rows
+    return { schemaType: 'groups', rows: [...existing, ...result.rows] }
+  }
+  return previous
 }
 
 export function Editor({
@@ -62,19 +96,20 @@ export function Editor({
   initialTitle,
   initialContent,
   initialGameId,
-  settings,
+  initialSettings,
 }: {
   id: string
   schemaType: EditableSchema
   initialTitle: string
   initialContent: unknown
   initialGameId: string
-  settings: ActivitySettings
+  initialSettings: ActivitySettings
 }) {
   const tt = useTranslate()
 
   const [title, setTitle] = useState(initialTitle)
   const [state, setState] = useState<Rows>(() => initialRows(schemaType, initialContent))
+  const [settings, setSettings] = useState<ActivitySettings>(initialSettings)
   const [gameId, setGameId] = useState(
     () => resolveGame(schemaType, initialGameId, initialGameId)?.id ?? initialGameId,
   )
@@ -89,8 +124,8 @@ export function Editor({
   // The serialized payload is the effect's dependency, so a re-render that
   // changes nothing does not restart the timer.
   const payload = useMemo(
-    () => ({ id, title, content, defaultGame: gameId }),
-    [id, title, content, gameId],
+    () => ({ id, title, content, defaultGame: gameId, settings }),
+    [id, title, content, gameId, settings],
   )
   const serialized = JSON.stringify(payload)
   const payloadRef = useRef(payload)
@@ -111,13 +146,17 @@ export function Editor({
     return () => clearTimeout(timer)
   }, [serialized])
 
-  // ── row helpers ────────────────────────────────────────────────────────────
   function addRow() {
-    setState((previous) =>
-      previous.schemaType === 'pairs'
-        ? { schemaType: 'pairs', rows: [...previous.rows, emptyPairDraft()] }
-        : { schemaType: 'mcq', rows: [...previous.rows, emptyMcqDraft()] },
-    )
+    setState((previous) => {
+      switch (previous.schemaType) {
+        case 'pairs':
+          return { schemaType: 'pairs', rows: [...previous.rows, emptyPairDraft()] }
+        case 'mcq':
+          return { schemaType: 'mcq', rows: [...previous.rows, emptyMcqDraft()] }
+        case 'groups':
+          return { schemaType: 'groups', rows: [...previous.rows, emptyGroupDraft()] }
+      }
+    })
   }
 
   const statusLabel: Record<SaveStatus, string> = {
@@ -144,13 +183,13 @@ export function Editor({
           />
         </div>
 
+        <SettingsPanel settings={settings} onChange={setSettings} />
+
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-medium text-ink">{tt('editor.content')}</h2>
           <span
             aria-live="polite"
-            className={
-              status === 'error' ? 'text-sm text-danger' : 'text-sm text-ink-soft'
-            }
+            className={status === 'error' ? 'text-sm text-danger' : 'text-sm text-ink-soft'}
           >
             {statusLabel[status]}
           </span>
@@ -161,16 +200,21 @@ export function Editor({
             rows={state.rows}
             onChange={(rows) => setState({ schemaType: 'pairs', rows })}
           />
-        ) : (
+        ) : state.schemaType === 'mcq' ? (
           <McqTable
             rows={state.rows}
             onChange={(rows) => setState({ schemaType: 'mcq', rows })}
+          />
+        ) : (
+          <GroupsTable
+            rows={state.rows}
+            onChange={(rows) => setState({ schemaType: 'groups', rows })}
           />
         )}
 
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={addRow}>
-            + {tt('editor.addRow')}
+            + {schemaType === 'groups' ? tt('editor.addGroup') : tt('editor.addRow')}
           </Button>
           <Button variant="secondary" onClick={() => setPasteOpen(true)}>
             {tt('editor.bulkPaste')}
@@ -195,7 +239,7 @@ export function Editor({
         <div className="rounded-(--radius-card) border border-border bg-bg p-4">
           {activeGame ? (
             <GameShell
-              key={`${activeGame.id}-${JSON.stringify(content)}`}
+              key={`${activeGame.id}-${JSON.stringify(content)}-${JSON.stringify(settings)}`}
               game={activeGame}
               rawContent={content}
               settings={settings}
@@ -209,17 +253,7 @@ export function Editor({
           schemaType={schemaType}
           onClose={() => setPasteOpen(false)}
           onApply={(result, mode) => {
-            setState((previous) => {
-              if (previous.schemaType === 'pairs' && result.schemaType === 'pairs') {
-                const existing = mode === 'replace' ? [] : previous.rows
-                return { schemaType: 'pairs', rows: [...existing, ...result.rows] }
-              }
-              if (previous.schemaType === 'mcq' && result.schemaType === 'mcq') {
-                const existing = mode === 'replace' ? [] : previous.rows
-                return { schemaType: 'mcq', rows: [...existing, ...result.rows] }
-              }
-              return previous
-            })
+            setState((previous) => applyPaste(previous, result, mode))
             setPasteOpen(false)
           }}
         />

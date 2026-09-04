@@ -4,12 +4,41 @@ import { useState } from 'react'
 
 import { useTranslate } from '@/components/LocaleProvider'
 import { Button } from '@/components/ui/Button'
-import { parseMcqPaste, parsePairsPaste } from '@/lib/parse'
-import { mcqItemsToDrafts, pairItemsToDrafts, type McqDraft, type PairDraft } from '@/lib/drafts'
+import { parseGroupsPaste, parseMcqPaste, parsePairsPaste } from '@/lib/parse'
+import {
+  groupsToDrafts,
+  mcqItemsToDrafts,
+  pairItemsToDrafts,
+  type GroupDraft,
+  type McqDraft,
+  type PairDraft,
+} from '@/lib/drafts'
 
-type Result =
+export type PasteSchema = 'pairs' | 'mcq' | 'groups'
+
+export type PasteResult =
   | { schemaType: 'pairs'; rows: PairDraft[]; skipped: number }
   | { schemaType: 'mcq'; rows: McqDraft[]; skipped: number }
+  | { schemaType: 'groups'; rows: GroupDraft[]; skipped: number }
+
+function parseFor(schemaType: PasteSchema, text: string): PasteResult {
+  if (schemaType === 'pairs') {
+    const report = parsePairsPaste(text)
+    return { schemaType, rows: pairItemsToDrafts(report.items), skipped: report.skipped }
+  }
+  if (schemaType === 'mcq') {
+    const report = parseMcqPaste(text)
+    return { schemaType, rows: mcqItemsToDrafts(report.items), skipped: report.skipped }
+  }
+  const report = parseGroupsPaste(text)
+  return { schemaType, rows: groupsToDrafts(report.items), skipped: report.skipped }
+}
+
+const HINTS = {
+  pairs: 'paste.pairsHint',
+  mcq: 'paste.mcqHint',
+  groups: 'paste.groupsHint',
+} as const
 
 /**
  * Bulk import from a spreadsheet. Teachers paste two or more columns straight
@@ -21,41 +50,21 @@ export function BulkPasteDialog({
   onClose,
   onApply,
 }: {
-  schemaType: 'pairs' | 'mcq'
+  schemaType: PasteSchema
   onClose: () => void
-  onApply: (result: Result, mode: 'append' | 'replace') => void
+  onApply: (result: PasteResult, mode: 'append' | 'replace') => void
 }) {
   const tt = useTranslate()
   const [text, setText] = useState('')
 
-  const parsed: Result =
-    schemaType === 'pairs'
-      ? (() => {
-          const report = parsePairsPaste(text)
-          return {
-            schemaType: 'pairs' as const,
-            rows: pairItemsToDrafts(report.items),
-            skipped: report.skipped,
-          }
-        })()
-      : (() => {
-          const report = parseMcqPaste(text)
-          return {
-            schemaType: 'mcq' as const,
-            rows: mcqItemsToDrafts(report.items),
-            skipped: report.skipped,
-          }
-        })()
-
+  const parsed = parseFor(schemaType, text)
   const found = parsed.rows.length
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
       <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 sm:rounded-2xl">
         <h2 className="text-lg font-semibold text-ink">{tt('paste.title')}</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          {tt(schemaType === 'pairs' ? 'paste.pairsHint' : 'paste.mcqHint')}
-        </p>
+        <p className="mt-1 text-sm text-ink-soft">{tt(HINTS[schemaType])}</p>
 
         <textarea
           autoFocus

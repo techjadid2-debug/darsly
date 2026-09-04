@@ -1,5 +1,9 @@
 import type { ComponentType } from 'react'
 
+import Anagram from '@/components/games/anagram'
+import Flashcards from '@/components/games/flashcards'
+import GroupSort from '@/components/games/group-sort'
+import MatchingPairs from '@/components/games/matching-pairs'
 import MatchUp from '@/components/games/match-up'
 import Quiz from '@/components/games/quiz'
 import type { GameProps } from '@/lib/game-types'
@@ -47,6 +51,38 @@ export const games: readonly GameEntry[] = [
     schemaType: 'pairs',
     Component: MatchUp,
     icon: '🔗',
+  },
+  {
+    id: 'flashcards',
+    label_uz: t('game.flashcards', 'uz'),
+    label_ru: t('game.flashcards', 'ru'),
+    schemaType: 'pairs',
+    Component: Flashcards,
+    icon: '🃏',
+  },
+  {
+    id: 'matching-pairs',
+    label_uz: t('game.matching-pairs', 'uz'),
+    label_ru: t('game.matching-pairs', 'ru'),
+    schemaType: 'pairs',
+    Component: MatchingPairs,
+    icon: '🧩',
+  },
+  {
+    id: 'anagram',
+    label_uz: t('game.anagram', 'uz'),
+    label_ru: t('game.anagram', 'ru'),
+    schemaType: 'pairs',
+    Component: Anagram,
+    icon: '🔤',
+  },
+  {
+    id: 'group-sort',
+    label_uz: t('game.group-sort', 'uz'),
+    label_ru: t('game.group-sort', 'ru'),
+    schemaType: 'groups',
+    Component: GroupSort,
+    icon: '🗂️',
   },
 ]
 

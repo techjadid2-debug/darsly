@@ -40,6 +40,7 @@ export function GameShell({
       <motion.div
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
+        data-theme-variant={settings.theme}
         className="rounded-(--radius-card) border border-border bg-surface px-6 py-10 text-center"
       >
         <h2 className="text-xl font-semibold text-ink">{tt('play.done.title')}</h2>
@@ -65,12 +66,14 @@ export function GameShell({
   }
 
   return (
-    <GameRenderer
-      key={`${game.id}-${round}`}
-      game={game}
-      rawContent={rawContent}
-      settings={settings}
-      onFinish={finish}
-    />
+    <div data-theme-variant={settings.theme}>
+      <GameRenderer
+        key={`${game.id}-${round}`}
+        game={game}
+        rawContent={rawContent}
+        settings={settings}
+        onFinish={finish}
+      />
+    </div>
   )
 }

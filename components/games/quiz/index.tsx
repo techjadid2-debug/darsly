@@ -4,7 +4,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 
 import { useTranslate } from '@/components/LocaleProvider'
+import { Timer } from '@/components/player/Timer'
 import { Button } from '@/components/ui/Button'
+import { useGameClock } from '@/lib/use-game-clock'
 import type { GameProps } from '@/lib/game-types'
 import type { McqContent } from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
@@ -49,10 +51,14 @@ export default function Quiz({ content, settings, onFinish }: GameProps<McqConte
     [content, settings.shuffle],
   )
 
-  const [startedAt] = useState(() => Date.now())
   const [index, setIndex] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
   const [score, setScore] = useState(0)
+
+  // Time up ends the round immediately with whatever has been scored so far.
+  const { remaining, elapsedSec } = useGameClock(settings, () => {
+    onFinish({ score, maxScore: questions.length, durationSec: elapsedSec() })
+  })
 
   const current = questions[index]
   if (!current) return null
@@ -70,11 +76,7 @@ export default function Quiz({ content, settings, onFinish }: GameProps<McqConte
   function advance() {
     if (isLast) {
       // `score` already includes the answer just given: setScore ran on click.
-      onFinish({
-        score,
-        maxScore: questions.length,
-        durationSec: Math.round((Date.now() - startedAt) / 1000),
-      })
+      onFinish({ score, maxScore: questions.length, durationSec: elapsedSec() })
       return
     }
     setIndex((value) => value + 1)
@@ -102,7 +104,10 @@ export default function Quiz({ content, settings, onFinish }: GameProps<McqConte
         <span>
           {tt('play.progress', { current: index + 1, total: questions.length })}
         </span>
-        <span>{tt('play.score', { score })}</span>
+        <span className="flex items-center gap-2">
+          <Timer remaining={remaining} />
+          {tt('play.score', { score })}
+        </span>
       </div>
 
       <AnimatePresence mode="wait">

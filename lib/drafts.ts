@@ -1,5 +1,12 @@
 import { makeId } from '@/lib/ids'
-import type { McqContent, McqItem, PairItem, PairsContent } from '@/lib/schemas'
+import type {
+  Group,
+  GroupsContent,
+  McqContent,
+  McqItem,
+  PairItem,
+  PairsContent,
+} from '@/lib/schemas'
 
 /**
  * Editor-side row types. Unlike the stored schemas these allow empty strings,
@@ -9,6 +16,8 @@ import type { McqContent, McqItem, PairItem, PairsContent } from '@/lib/schemas'
  */
 
 export type PairDraft = { id: string; term: string; definition: string }
+/** Group items are edited as one textarea, one item per line. */
+export type GroupDraft = { id: string; name: string; itemsText: string }
 export type McqDraft = {
   id: string
   question: string
@@ -105,4 +114,38 @@ export function moveRow<T>(rows: readonly T[], from: number, direction: -1 | 1):
   next[from] = b
   next[to] = a
   return next
+}
+
+export function emptyGroupDraft(): GroupDraft {
+  return { id: makeId(), name: '', itemsText: '' }
+}
+
+export function groupDraftsFrom(content: GroupsContent): GroupDraft[] {
+  return content.groups.map((group) => ({
+    id: makeId(),
+    name: group.name,
+    itemsText: group.items.join('\n'),
+  }))
+}
+
+export function groupsToDrafts(groups: Group[]): GroupDraft[] {
+  return groups.map((group) => ({
+    id: makeId(),
+    name: group.name,
+    itemsText: group.items.join('\n'),
+  }))
+}
+
+export function toGroupsContent(rows: readonly GroupDraft[]): GroupsContent {
+  return {
+    groups: rows
+      .map((row) => ({
+        name: row.name.trim(),
+        items: row.itemsText
+          .split(/\r?\n/)
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0),
+      }))
+      .filter((group) => group.name.length > 0 && group.items.length > 0),
+  }
 }

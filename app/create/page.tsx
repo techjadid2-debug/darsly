@@ -9,7 +9,7 @@ import { getLocale } from '@/lib/locale'
 import type { SchemaType } from '@/lib/schemas'
 import { createClient } from '@/lib/supabase/server'
 
-/** Schemas the editor can handle today. M3 adds groups and sequence. */
+/** Schemas with at least one game in the MVP set. `sequence` has none yet. */
 const CHOICES: ReadonlyArray<{
   schemaType: SchemaType
   name: TKey
@@ -18,6 +18,12 @@ const CHOICES: ReadonlyArray<{
 }> = [
   { schemaType: 'pairs', name: 'schema.pairs.name', hint: 'schema.pairs.hint', icon: '🔗' },
   { schemaType: 'mcq', name: 'schema.mcq.name', hint: 'schema.mcq.hint', icon: '❓' },
+  {
+    schemaType: 'groups',
+    name: 'schema.groups.name',
+    hint: 'schema.groups.hint',
+    icon: '🗂️',
+  },
 ]
 
 export default async function CreatePage({
@@ -52,7 +58,7 @@ export default async function CreatePage({
           </div>
         ) : null}
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CHOICES.map((choice) => (
             <form action={createActivity} key={choice.schemaType}>
               <input type="hidden" name="schemaType" value={choice.schemaType} />
