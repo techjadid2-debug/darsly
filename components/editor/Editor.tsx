@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { saveActivity } from '@/app/actions/activities'
 import { BulkPasteDialog, type PasteResult } from '@/components/editor/BulkPasteDialog'
@@ -49,6 +49,8 @@ type Rows =
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 const AUTOSAVE_DELAY_MS = 800
+/** One silent retry rides out a transient blip before the teacher is asked. */
+const RETRY_DELAY_MS = 2000
 
 function initialRows(schemaType: EditableSchema, raw: unknown): Rows {
   if (schemaType === 'pairs') {
@@ -146,19 +148,53 @@ export function Editor({
   payloadRef.current = payload
   const isFirstRender = useRef(true)
 
+  // Held so a fresh edit supersedes a scheduled retry rather than racing it.
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const save = useCallback(async (attempt = 0): Promise<void> => {
+    setStatus('saving')
+    const result = await saveActivity(payloadRef.current)
+    if (result.ok) {
+      setStatus('saved')
+      return
+    }
+    // Stay in 'saving' through the automatic attempt: it is still trying, and
+    // saying otherwise would ask the teacher to act on a blip that self-heals.
+    if (attempt === 0) {
+      retryTimer.current = setTimeout(() => void save(1), RETRY_DELAY_MS)
+      return
+    }
+    setStatus('error')
+  }, [])
+
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
       return
     }
+    if (retryTimer.current) clearTimeout(retryTimer.current)
     setStatus('saving')
-    const timer = setTimeout(() => {
-      void saveActivity(payloadRef.current).then((result) => {
-        setStatus(result.ok ? 'saved' : 'error')
-      })
-    }, AUTOSAVE_DELAY_MS)
+    const timer = setTimeout(() => void save(), AUTOSAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [serialized])
+  }, [serialized, save])
+
+  useEffect(
+    () => () => {
+      if (retryTimer.current) clearTimeout(retryTimer.current)
+    },
+    [],
+  )
+
+  // The debounce is a window where the last keystrokes exist only in this tab,
+  // and a failed save is that same window held open indefinitely. Both are
+  // worth a browser warning; 'saved' and 'idle' are not.
+  const unsaved = status === 'saving' || status === 'error'
+  useEffect(() => {
+    if (!unsaved) return
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [unsaved])
 
   function addRow() {
     setState((previous) => {
@@ -222,11 +258,22 @@ export function Editor({
 
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-medium text-ink">{tt('editor.content')}</h2>
-          <span
-            aria-live="polite"
-            className={status === 'error' ? 'text-sm text-danger' : 'text-sm text-ink-soft'}
-          >
-            {statusLabel[status]}
+          <span className="flex items-center gap-2">
+            <span
+              aria-live="polite"
+              className={status === 'error' ? 'text-sm text-danger' : 'text-sm text-ink-soft'}
+            >
+              {statusLabel[status]}
+            </span>
+            {status === 'error' ? (
+              <button
+                type="button"
+                onClick={() => void save()}
+                className="text-sm font-medium text-brand hover:underline"
+              >
+                {tt('common.retry')}
+              </button>
+            ) : null}
           </span>
         </div>
 

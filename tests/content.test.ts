@@ -173,6 +173,26 @@ test('a group with no name or no items is not saved', () => {
   assert.ok(groupsContentSchema.safeParse(content).success)
 })
 
+test('two editor rows sharing a name become one group, keeping both sets', () => {
+  // `group-sort` uses the name as its dnd-kit droppable id and `/print` as a
+  // React key, so two groups called the same thing would collide and score as
+  // one. `parseGroupsPaste` already merges; the editor path must agree.
+  const content = toGroupsContent([
+    { id: '1', name: 'Mevalar', itemsText: 'olma\nanor' },
+    { id: '2', name: 'Sabzavotlar', itemsText: 'sabzi' },
+    { id: '3', name: '  Mevalar  ', itemsText: 'uzum' },
+  ])
+
+  const names = content.groups.map((group) => group.name)
+  assert.equal(new Set(names).size, names.length, 'a name is repeated downstream')
+  assert.equal(content.groups.length, 2)
+  assert.deepEqual(content.groups[0], {
+    name: 'Mevalar',
+    items: ['olma', 'anor', 'uzum'],
+  })
+  assert.ok(groupsContentSchema.safeParse(content).success)
+})
+
 // ── settings ──────────────────────────────────────────────────────────────────
 
 test('settings fall back to defaults and reject out-of-range values', () => {

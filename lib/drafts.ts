@@ -136,16 +136,29 @@ export function groupsToDrafts(groups: Group[]): GroupDraft[] {
   }))
 }
 
+/**
+ * A group's name is its identity downstream: `group-sort` uses it as the
+ * dnd-kit droppable id and `/print` as a React key, so two rows sharing a name
+ * would collide there and be scored as one group. They are merged here instead
+ * — dropping the second row would silently lose items the teacher typed.
+ */
 export function toGroupsContent(rows: readonly GroupDraft[]): GroupsContent {
-  return {
-    groups: rows
-      .map((row) => ({
-        name: row.name.trim(),
-        items: row.itemsText
-          .split(/\r?\n/)
-          .map((item) => item.trim())
-          .filter((item) => item.length > 0),
-      }))
-      .filter((group) => group.name.length > 0 && group.items.length > 0),
+  const merged = new Map<string, string[]>()
+
+  for (const row of rows) {
+    const name = row.name.trim()
+    if (name.length === 0) continue
+
+    const items = row.itemsText
+      .split(/\r?\n/)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0)
+    if (items.length === 0) continue
+
+    const existing = merged.get(name)
+    if (existing) existing.push(...items)
+    else merged.set(name, items)
   }
+
+  return { groups: [...merged].map(([name, items]) => ({ name, items })) }
 }

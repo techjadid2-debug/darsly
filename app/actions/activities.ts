@@ -142,12 +142,30 @@ export async function saveActivity(input: {
   return { ok: true, savedAt: Date.now() }
 }
 
+/**
+ * Deletes one activity the caller owns. RLS would already refuse someone
+ * else's row, but a delete matching zero rows is indistinguishable from one
+ * that worked — and unlike a failed save this is not recoverable — so the
+ * owner scope and the `select` that proves a row went are both explicit.
+ */
 export async function deleteActivity(formData: FormData): Promise<void> {
   const id = formData.get('id')
-  if (typeof id !== 'string') return
+  if (typeof id !== 'string') redirect('/dashboard?error=delete')
 
   const supabase = await createClient()
-  await supabase.from('activities').delete().eq('id', id)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect(`/login?next=${encodeURIComponent('/dashboard')}`)
+
+  const { data: deleted, error } = await supabase
+    .from('activities')
+    .delete()
+    .eq('id', id)
+    .eq('owner_id', user.id)
+    .select('id')
+
+  if (error || !deleted || deleted.length === 0) redirect('/dashboard?error=delete')
 
   revalidatePath('/dashboard')
   redirect('/dashboard')

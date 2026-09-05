@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
+import { DeleteActivityButton } from '@/components/dashboard/DeleteActivityButton'
 import { Header } from '@/components/layout/Header'
 import { ButtonLink } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -13,7 +14,12 @@ import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Dashboard' }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const pageError = (await searchParams).error
   const locale = await getLocale()
   const tt = translator(locale)
 
@@ -44,6 +50,15 @@ export default async function DashboardPage() {
           <ButtonLink href="/create">{tt('dashboard.new')}</ButtonLink>
         </div>
 
+        {pageError === 'delete' ? (
+          <div className="mt-6">
+            <ErrorState
+              title={tt('dashboard.delete.failed.title')}
+              body={tt('dashboard.delete.failed.body')}
+            />
+          </div>
+        ) : null}
+
         <div className="mt-6">
           {error ? (
             <ErrorState
@@ -73,7 +88,7 @@ export default async function DashboardPage() {
                       </p>
                     </div>
 
-                    <div className="mt-auto flex gap-3 text-sm font-medium">
+                    <div className="mt-auto flex flex-wrap items-center gap-3 text-sm font-medium">
                       <Link href={`/edit/${activity.id}`} className="text-brand hover:underline">
                         {tt('dashboard.edit')}
                       </Link>
@@ -83,6 +98,17 @@ export default async function DashboardPage() {
                       >
                         {tt('dashboard.play')}
                       </Link>
+                      <DeleteActivityButton
+                        id={activity.id}
+                        labels={{
+                          delete: tt('dashboard.delete'),
+                          confirm: tt('dashboard.delete.confirm', {
+                            title: activity.title || tt('dashboard.untitled'),
+                          }),
+                          yes: tt('dashboard.delete.yes'),
+                          cancel: tt('common.cancel'),
+                        }}
+                      />
                     </div>
                   </li>
                 )

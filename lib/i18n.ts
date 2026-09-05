@@ -81,6 +81,11 @@ const uz = {
   'dashboard.itemCount': '{n} ta element',
   'dashboard.edit': 'Tahrirlash',
   'dashboard.play': 'O‘ynash',
+  'dashboard.delete': 'O‘chirish',
+  'dashboard.delete.confirm': '“{title}” butunlay o‘chiriladi. Davom etasizmi?',
+  'dashboard.delete.yes': 'Ha, o‘chirish',
+  'dashboard.delete.failed.title': 'Mashqni o‘chirib bo‘lmadi',
+  'dashboard.delete.failed.body': 'Mashq topilmadi yoki u sizga tegishli emas.',
 
   'create.title': 'Yangi mashq',
   'create.subtitle':
@@ -368,6 +373,11 @@ const ru: Record<TKey, string> = {
   'dashboard.itemCount': 'Элементов: {n}',
   'dashboard.edit': 'Редактировать',
   'dashboard.play': 'Играть',
+  'dashboard.delete': 'Удалить',
+  'dashboard.delete.confirm': '«{title}» будет удалено безвозвратно. Продолжить?',
+  'dashboard.delete.yes': 'Да, удалить',
+  'dashboard.delete.failed.title': 'Не удалось удалить задание',
+  'dashboard.delete.failed.body': 'Задание не найдено или принадлежит не вам.',
 
   'create.title': 'Новое задание',
   'create.subtitle':
