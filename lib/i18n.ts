@@ -588,6 +588,14 @@ const ru: Record<TKey, string> = {
 
 const dict: Record<Locale, Record<TKey, string>> = { uz, ru }
 
+/**
+ * Every key, in declaration order. `Record<TKey, string>` already makes
+ * TypeScript fail on a key that exists in one locale and not the other, but it
+ * says nothing about the *contents* — a translation that drops a `{placeholder}`
+ * still compiles. Exported so a test can walk the whole dictionary.
+ */
+export const translationKeys = Object.keys(uz) as readonly TKey[]
+
 export type TParams = Record<string, string | number>
 
 function fill(template: string, params?: TParams): string {
