@@ -7,12 +7,14 @@ import { ButtonLink } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { gameLabel, getGame } from '@/lib/games'
-import { translator } from '@/lib/i18n'
+import { t, translator } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import { countItems, isSchemaType } from '@/lib/schemas'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata = { title: 'Dashboard' }
+export async function generateMetadata() {
+  return { title: t('dashboard.title', await getLocale()) }
+}
 
 export default async function DashboardPage({
   searchParams,

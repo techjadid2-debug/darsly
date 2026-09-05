@@ -18,7 +18,6 @@ import {
 import { readSpreadsheet } from '@/lib/import-file'
 import { rowsToGroups, rowsToMcq, rowsToPairs } from '@/lib/parse'
 import { templatesFor } from '@/lib/templates'
-import type { SchemaType } from '@/lib/schemas'
 
 type HelperSchema = 'pairs' | 'mcq' | 'groups'
 
@@ -52,12 +51,15 @@ export function ContentHelper({
   const locale = useLocale()
   const fileInput = useRef<HTMLInputElement>(null)
   const [importState, setImportState] = useState<'idle' | 'reading' | 'error'>('idle')
+  const [fileName, setFileName] = useState<string | null>(null)
 
-  const availableConversions = conversionsFrom(schemaType as SchemaType)
-  const availableTemplates = templatesFor(schemaType as SchemaType)
+  const availableConversions = conversionsFrom(schemaType)
+  const availableTemplates = templatesFor(schemaType)
 
   async function handleFile(file: File | undefined) {
     if (!file) return
+    // The native input is `sr-only`, so its filename is not on screen.
+    setFileName(file.name)
     setImportState('reading')
     try {
       const rows = await readSpreadsheet(file)
@@ -91,8 +93,16 @@ export function ContentHelper({
             type="file"
             accept=".csv,.txt,.xlsx,.xlsm,text/csv"
             onChange={(event) => void handleFile(event.target.files?.[0])}
-            className="text-sm text-ink file:mr-3 file:h-10 file:cursor-pointer file:rounded-xl file:border file:border-border file:bg-surface-2 file:px-3 file:text-sm file:text-ink"
+            // Fully hidden, not `sr-only`: the button below is the control, and
+            // an `sr-only` input would still be an unlabelled tab stop.
+            className="hidden"
           />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={() => fileInput.current?.click()}>
+              {tt('helper.import.choose')}
+            </Button>
+            {fileName ? <span className="text-sm text-ink-soft">{fileName}</span> : null}
+          </div>
           {importState === 'reading' ? (
             <p className="text-sm text-ink-soft">{tt('helper.import.reading')}</p>
           ) : null}

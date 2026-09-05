@@ -2,6 +2,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { ButtonLink } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { gameLabel, games } from '@/lib/games'
 import { translator, type TKey } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import { createClient } from '@/lib/supabase/server'
@@ -12,14 +13,9 @@ const STEPS: ReadonlyArray<{ title: TKey; body: TKey }> = [
   { title: 'how.step3.title', body: 'how.step3.body' },
 ]
 
-const GAME_KEYS: readonly TKey[] = [
-  'game.quiz',
-  'game.match-up',
-  'game.flashcards',
-  'game.matching-pairs',
-  'game.group-sort',
-  'game.anagram',
-]
+// Read from the registry, not retyped: `lib/games.ts` promises that adding a
+// game is one file plus one entry, and a hand-written list here quietly broke
+// that by leaving the seventh game off the homepage.
 
 export default async function LandingPage() {
   const locale = await getLocale()
@@ -72,12 +68,12 @@ export default async function LandingPage() {
         <section className="mx-auto w-full max-w-5xl px-4 pb-16 pt-6">
           <h2 className="text-xl font-semibold text-ink">{tt('games.title')}</h2>
           <ul className="mt-5 flex flex-wrap gap-2">
-            {GAME_KEYS.map((key) => (
+            {games.map((game) => (
               <li
-                key={key}
+                key={game.id}
                 className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-ink"
               >
-                {tt(key)}
+                {game.icon} {gameLabel(game, locale)}
               </li>
             ))}
           </ul>

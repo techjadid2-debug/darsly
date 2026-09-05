@@ -32,6 +32,7 @@ import {
 } from '@/lib/drafts'
 import { gamesForSchema, getGame, resolveGame } from '@/lib/games'
 import {
+  countItems,
   groupsContentSchema,
   mcqContentSchema,
   pairsContentSchema,
@@ -319,7 +320,13 @@ export function Editor({
         <GameChips games={available} activeId={gameId} onSelect={setGameId} />
 
         <div className="rounded-(--radius-card) border border-border bg-bg p-4">
-          {activeGame ? (
+          {countItems(schemaType, content) === 0 ? (
+            // A half-typed first row would otherwise render the game's own
+            // "nothing here" state, which reads like the game is broken.
+            <p className="py-6 text-center text-sm text-ink-soft">
+              {tt('editor.emptyPreview')}
+            </p>
+          ) : activeGame ? (
             <GameShell
               key={`${activeGame.id}-${JSON.stringify(content)}-${JSON.stringify(settings)}`}
               game={activeGame}

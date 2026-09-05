@@ -1,10 +1,11 @@
 import { LocaleProvider } from '@/components/LocaleProvider'
 import { PrintButton } from '@/components/print/PrintButton'
 import { ErrorState } from '@/components/ui/ErrorState'
-import { translator, type Translate } from '@/lib/i18n'
+import { translator, type Locale, type Translate } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import {
   groupsContentSchema,
+  isSchemaType,
   mcqContentSchema,
   pairsContentSchema,
   type SchemaType,
@@ -12,7 +13,10 @@ import {
 import { shuffle } from '@/lib/shuffle'
 import { createClient } from '@/lib/supabase/server'
 
-const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'] as const
+const LETTERS: Record<Locale, readonly string[]> = {
+  uz: ['A', 'B', 'C', 'D', 'E', 'F'],
+  ru: ['А', 'Б', 'В', 'Г', 'Д', 'Е'],
+}
 
 const INSTRUCTIONS = {
   pairs: 'print.instructions.pairs',
@@ -28,7 +32,13 @@ function BlankLine() {
 
 type Sheet = { worksheet: React.ReactNode; answerKey: React.ReactNode } | null
 
-function buildSheet(schemaType: SchemaType, content: unknown, tt: Translate, seed: string): Sheet {
+function buildSheet(
+  schemaType: SchemaType,
+  content: unknown,
+  tt: Translate,
+  seed: string,
+  letters: readonly string[],
+): Sheet {
   if (schemaType === 'pairs') {
     const parsed = pairsContentSchema.safeParse(content)
     if (!parsed.success || parsed.data.items.length === 0) return null
@@ -69,7 +79,7 @@ function buildSheet(schemaType: SchemaType, content: unknown, tt: Translate, see
               <ul className="mt-1 flex flex-col gap-0.5 pl-1">
                 {item.options.map((option, index) => (
                   <li key={`${item.id}-${index}`}>
-                    <span className="inline-block w-6">{LETTERS[index] ?? index + 1})</span>
+                    <span className="inline-block w-6">{letters[index] ?? index + 1})</span>
                     {option}
                   </li>
                 ))}
@@ -82,7 +92,7 @@ function buildSheet(schemaType: SchemaType, content: unknown, tt: Translate, see
         <ol className="flex list-decimal flex-col gap-1 pl-6">
           {items.map((item) => (
             <li key={item.id}>
-              {LETTERS[item.correct_index] ?? item.correct_index + 1}) {' '}
+              {letters[item.correct_index] ?? item.correct_index + 1}) {' '}
               {item.options[item.correct_index]}
             </li>
           ))}
@@ -156,8 +166,16 @@ export default async function PrintPage({
     )
   }
 
-  const schemaType = activity.schema_type as SchemaType
-  const sheet = buildSheet(schemaType, activity.content, tt, activity.id)
+  if (!isSchemaType(activity.schema_type)) {
+    return (
+      <main className="mx-auto w-full max-w-2xl px-4 py-16">
+        <ErrorState title={tt('play.notFound.title')} body={tt('play.notFound.body')} />
+      </main>
+    )
+  }
+
+  const schemaType = activity.schema_type
+  const sheet = buildSheet(schemaType, activity.content, tt, activity.id, LETTERS[locale])
 
   return (
     <LocaleProvider locale={locale}>

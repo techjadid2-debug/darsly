@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useTranslate } from '@/components/LocaleProvider'
 import { Button } from '@/components/ui/Button'
@@ -56,14 +56,67 @@ export function BulkPasteDialog({
 }) {
   const tt = useTranslate()
   const [text, setText] = useState('')
+  const dialog = useRef<HTMLDivElement>(null)
+
+  // A `fixed inset-0` overlay is only a dialog if it behaves like one: Escape
+  // closes it, Tab cannot wander onto the editor behind it, and focus goes back
+  // where it came from afterwards.
+  useEffect(() => {
+    const opener = document.activeElement
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab' || !dialog.current) return
+
+      const focusable = [
+        ...dialog.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), textarea, input, select, a[href], [tabindex]:not([tabindex="-1"])',
+        ),
+      ]
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (!first || !last) return
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (opener instanceof HTMLElement) opener.focus()
+    }
+  }, [onClose])
 
   const parsed = parseFor(schemaType, text)
   const found = parsed.rows.length
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
-      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 sm:rounded-2xl">
-        <h2 className="text-lg font-semibold text-ink">{tt('paste.title')}</h2>
+    <div
+      // Clicking the backdrop, not the sheet, closes it.
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+    >
+      <div
+        ref={dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bulk-paste-title"
+        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-border bg-surface p-5 sm:rounded-2xl"
+      >
+        <h2 id="bulk-paste-title" className="text-lg font-semibold text-ink">
+          {tt('paste.title')}
+        </h2>
         <p className="mt-1 text-sm text-ink-soft">{tt(HINTS[schemaType])}</p>
 
         <textarea
