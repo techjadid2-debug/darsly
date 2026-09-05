@@ -21,11 +21,12 @@ const uz = {
   'common.retry': 'Qayta urinish',
   'common.loading': 'Yuklanmoqda…',
   'common.language': 'Til',
+  'common.locale.uz': 'O‘zbekcha',
+  'common.locale.ru': 'Русский',
   'common.dashboard': 'Mashqlarim',
   'common.cancel': 'Bekor qilish',
-  'common.back': 'Orqaga',
 
-  'hero.title': 'Bir marta kiriting — oltita o‘yin chiqsin',
+  'hero.title': 'Bir marta kiriting — bir nechta o‘yin chiqsin',
   'hero.subtitle':
     'So‘z juftliklari, savollar yoki kategoriyalarni bir marta kiritasiz. Ular o‘zi viktorina, moslashtirish, kartochka va boshqa interaktiv o‘yinlarga aylanadi.',
   'hero.ctaPrimary': 'Bepul boshlash',
@@ -44,6 +45,7 @@ const uz = {
 
   'games.title': 'Mavjud o‘yinlar',
   'game.quiz': 'Viktorina',
+  'game.fill-blanks': 'Bo‘shliqni to‘ldirish',
   'game.match-up': 'Moslashtirish',
   'game.flashcards': 'Kartochkalar',
   'game.matching-pairs': 'Juftini top',
@@ -81,6 +83,11 @@ const uz = {
   'dashboard.itemCount': '{n} ta element',
   'dashboard.edit': 'Tahrirlash',
   'dashboard.play': 'O‘ynash',
+  'dashboard.delete': 'O‘chirish',
+  'dashboard.delete.confirm': '“{title}” butunlay o‘chiriladi. Davom etasizmi?',
+  'dashboard.delete.yes': 'Ha, o‘chirish',
+  'dashboard.delete.failed.title': 'Mashqni o‘chirib bo‘lmadi',
+  'dashboard.delete.failed.body': 'Mashq topilmadi yoki u sizga tegishli emas.',
 
   'create.title': 'Yangi mashq',
   'create.subtitle':
@@ -110,7 +117,6 @@ const uz = {
   'editor.definition': 'Ta’rif',
   'editor.question': 'Savol',
   'editor.option': 'Variant {n}',
-  'editor.correctAnswer': 'To‘g‘ri javob',
   'editor.markCorrect': 'To‘g‘ri deb belgilash',
   'editor.addOption': 'Variant qo‘shish',
   'editor.removeOption': 'Variantni o‘chirish',
@@ -123,6 +129,8 @@ const uz = {
     'Har qatorda avval atama, keyin ta’rif. Excel’dagi ikkita ustunni nusxalab, shu yerga joylashtiring.',
   'paste.mcqHint':
     'Har qatorda avval savol, keyin to‘g‘ri javob, keyin noto‘g‘ri variantlar.',
+  'paste.sequenceHint':
+    'Har qatorda bitta gap. Yashiriladigan so‘zni kvadrat qavsga oling: Suv [100] gradusda qaynaydi.',
   'paste.placeholder': 'Shu yerga joylashtiring…',
   'paste.append': 'Qo‘shish',
   'paste.replace': 'Butunlay almashtirish',
@@ -133,6 +141,7 @@ const uz = {
   'play.score': 'Ball: {score}',
   'play.correct': 'To‘g‘ri!',
   'play.wrong': 'Noto‘g‘ri',
+  'play.correctAnswer': 'To‘g‘ri javob',
   'play.next': 'Keyingi',
   'play.check': 'Tekshirish',
   'play.finish': 'Yakunlash',
@@ -152,12 +161,20 @@ const uz = {
   'matchup.dropHere': 'Bu yerga tashlang',
   'matchup.pool': 'Ta’riflar',
   'matchup.remaining': 'Qoldi: {n}',
+  'schema.sequence.name': 'Bo‘shliqli gaplar',
+  'schema.sequence.hint':
+    'Gaplar va ulardagi yashiriladigan so‘zlar. Bo‘shliqni to‘ldirish uchun.',
   'schema.groups.name': 'Kategoriyalar',
   'schema.groups.hint': 'Guruh nomlari va ularga tegishli elementlar. Guruhlarga ajratish uchun.',
 
   'editor.groupName': 'Guruh nomi',
   'editor.groupItems': 'Elementlar — har qatorda bittadan',
   'editor.addGroup': 'Guruh qo‘shish',
+  'editor.addSentence': 'Gap qo‘shish',
+  'editor.sentence': 'Gap',
+  'editor.sentencePlaceholder': 'Suv [100] gradusda qaynaydi',
+  'editor.blanksHint':
+    'Yashirmoqchi bo‘lgan so‘zni kvadrat qavsga oling: Suv [100] gradusda qaynaydi.',
   'editor.groupLabel': '{n}-guruh',
   'paste.groupsHint':
     'Har qatorda avval guruh nomi, keyin unga tegishli elementlar. Bir guruh nomi bir necha marta uchrasa, elementlar birlashtiriladi.',
@@ -183,6 +200,7 @@ const uz = {
 
   'memory.instruction': 'Ikkita katakchani oching va juftini toping.',
   'memory.found': 'Topilgan juftlar: {found} / {total}',
+  'memory.tile.down': '{n}-katak, yopiq',
 
   'groupsort.instruction': 'Har bir elementni to‘g‘ri guruhga tashlang.',
   'groupsort.pool': 'Elementlar',
@@ -190,6 +208,17 @@ const uz = {
   'anagram.instruction': 'Harflarni surib, to‘g‘ri so‘zni yig‘ing.',
   'anagram.hint': 'Yordam: {hint}',
   'anagram.progress': 'So‘z {current} / {total}',
+  'blanks.instruction': 'Bo‘sh joylarga to‘g‘ri so‘zlarni qo‘ying.',
+  'blanks.bank': 'So‘zlar',
+  'blanks.blank': '{n}-bo‘sh joy',
+  'blanks.filled': '{n}-bo‘sh joy: {word}',
+  'dnd.instructions':
+    'Elementni olish uchun probel yoki Enter tugmasini bosing. Strelkalar bilan ko‘chiring, qo‘yish uchun yana probelni bosing. Escape bekor qiladi.',
+  'dnd.picked': '{item} olindi.',
+  'dnd.over': '{item} hozir {target} ustida.',
+  'dnd.dropped': '{item} {target} ichiga qo‘yildi.',
+  'dnd.returned': '{item} joyiga qaytarildi.',
+  'dnd.cancelled': '{item} bekor qilindi.',
   'helper.title': 'Kontent yordamchisi',
   'helper.convert.title': 'Boshqa turga aylantirish',
   'helper.convert.hint':
@@ -205,7 +234,6 @@ const uz = {
     'Har element uchun «qaysi guruhga kiradi?» degan savol tuziladi.',
   'convert.q.pairs': '«{term}» nimaga mos keladi?',
   'convert.q.groups': '«{item}» qaysi guruhga kiradi?',
-  'convert.ready': '{n} ta savol tayyorlanadi',
   'convert.create': 'Yangi mashq yaratish',
   'convert.error.tooFewPairs': 'Kamida 2 ta to‘liq juftlik kerak.',
   'convert.error.tooFewGroups': 'Kamida 2 ta guruh kerak.',
@@ -227,6 +255,7 @@ const uz = {
   'template.cell': 'Biologiya — hujayra qismlari',
   'template.food-groups': 'Mevalar va sabzavotlar',
   'template.math-quiz': 'Matematika — tezkor test',
+  'template.water': 'Tabiatshunoslik — suv',
   'subject.math': 'Matematika',
   'subject.uzbek': 'Ona tili',
   'subject.english': 'Ingliz tili',
@@ -292,6 +321,7 @@ const uz = {
   'print.answerKey': 'Javoblar kaliti',
   'print.instructions.pairs': 'Har bir atamaning ta’rifini yozing.',
   'print.instructions.mcq': 'To‘g‘ri javobni belgilang.',
+  'print.instructions.sequence': 'Bo‘sh joylarga mos so‘zlarni yozing.',
   'print.instructions.groups':
     'Quyidagi elementlarni to‘g‘ri guruhga yozing.',
   'print.items': 'Elementlar',
@@ -309,11 +339,12 @@ const ru: Record<TKey, string> = {
   'common.retry': 'Повторить',
   'common.loading': 'Загрузка…',
   'common.language': 'Язык',
+  'common.locale.uz': 'O‘zbekcha',
+  'common.locale.ru': 'Русский',
   'common.dashboard': 'Мои задания',
   'common.cancel': 'Отмена',
-  'common.back': 'Назад',
 
-  'hero.title': 'Введите один раз — получите шесть игр',
+  'hero.title': 'Введите один раз — получите несколько игр',
   'hero.subtitle':
     'Вы один раз вводите пары слов, вопросы или категории. Они сами превращаются в викторину, сопоставление, карточки и другие интерактивные игры.',
   'hero.ctaPrimary': 'Начать бесплатно',
@@ -332,6 +363,7 @@ const ru: Record<TKey, string> = {
 
   'games.title': 'Доступные игры',
   'game.quiz': 'Викторина',
+  'game.fill-blanks': 'Заполни пропуски',
   'game.match-up': 'Сопоставление',
   'game.flashcards': 'Карточки',
   'game.matching-pairs': 'Найди пару',
@@ -368,6 +400,11 @@ const ru: Record<TKey, string> = {
   'dashboard.itemCount': 'Элементов: {n}',
   'dashboard.edit': 'Редактировать',
   'dashboard.play': 'Играть',
+  'dashboard.delete': 'Удалить',
+  'dashboard.delete.confirm': '«{title}» будет удалено безвозвратно. Продолжить?',
+  'dashboard.delete.yes': 'Да, удалить',
+  'dashboard.delete.failed.title': 'Не удалось удалить задание',
+  'dashboard.delete.failed.body': 'Задание не найдено или принадлежит не вам.',
 
   'create.title': 'Новое задание',
   'create.subtitle':
@@ -397,7 +434,6 @@ const ru: Record<TKey, string> = {
   'editor.definition': 'Определение',
   'editor.question': 'Вопрос',
   'editor.option': 'Вариант {n}',
-  'editor.correctAnswer': 'Правильный ответ',
   'editor.markCorrect': 'Отметить правильным',
   'editor.addOption': 'Добавить вариант',
   'editor.removeOption': 'Удалить вариант',
@@ -410,6 +446,8 @@ const ru: Record<TKey, string> = {
     'В каждой строке сначала термин, затем определение. Скопируйте два столбца из Excel и вставьте сюда.',
   'paste.mcqHint':
     'В каждой строке сначала вопрос, затем правильный ответ, затем неправильные варианты.',
+  'paste.sequenceHint':
+    'По одному предложению в строке. Скрываемое слово — в квадратных скобках: Вода кипит при [100] градусах.',
   'paste.placeholder': 'Вставьте сюда…',
   'paste.append': 'Добавить',
   'paste.replace': 'Заменить полностью',
@@ -420,6 +458,7 @@ const ru: Record<TKey, string> = {
   'play.score': 'Очки: {score}',
   'play.correct': 'Правильно!',
   'play.wrong': 'Неправильно',
+  'play.correctAnswer': 'Правильный ответ',
   'play.next': 'Далее',
   'play.check': 'Проверить',
   'play.finish': 'Завершить',
@@ -440,6 +479,9 @@ const ru: Record<TKey, string> = {
   'matchup.dropHere': 'Перетащите сюда',
   'matchup.pool': 'Определения',
   'matchup.remaining': 'Осталось: {n}',
+  'schema.sequence.name': 'Предложения с пропусками',
+  'schema.sequence.hint':
+    'Предложения и слова, которые нужно скрыть. Для заполнения пропусков.',
   'schema.groups.name': 'Категории',
   'schema.groups.hint':
     'Названия групп и относящиеся к ним элементы. Для сортировки по группам.',
@@ -447,6 +489,11 @@ const ru: Record<TKey, string> = {
   'editor.groupName': 'Название группы',
   'editor.groupItems': 'Элементы — по одному в строке',
   'editor.addGroup': 'Добавить группу',
+  'editor.addSentence': 'Добавить предложение',
+  'editor.sentence': 'Предложение',
+  'editor.sentencePlaceholder': 'Вода кипит при [100] градусах',
+  'editor.blanksHint':
+    'Возьмите скрываемое слово в квадратные скобки: Вода кипит при [100] градусах.',
   'editor.groupLabel': 'Группа {n}',
   'paste.groupsHint':
     'В каждой строке сначала название группы, затем её элементы. Если название повторяется, элементы объединяются.',
@@ -472,6 +519,7 @@ const ru: Record<TKey, string> = {
 
   'memory.instruction': 'Открывайте по две карточки и находите пары.',
   'memory.found': 'Найдено пар: {found} / {total}',
+  'memory.tile.down': 'Карточка {n}, закрыта',
 
   'groupsort.instruction': 'Перетащите каждый элемент в нужную группу.',
   'groupsort.pool': 'Элементы',
@@ -479,6 +527,17 @@ const ru: Record<TKey, string> = {
   'anagram.instruction': 'Переставьте буквы и соберите слово.',
   'anagram.hint': 'Подсказка: {hint}',
   'anagram.progress': 'Слово {current} / {total}',
+  'blanks.instruction': 'Вставьте нужные слова в пропуски.',
+  'blanks.bank': 'Слова',
+  'blanks.blank': 'Пропуск {n}',
+  'blanks.filled': 'Пропуск {n}: {word}',
+  'dnd.instructions':
+    'Нажмите пробел или Enter, чтобы взять элемент. Перемещайте стрелками, отпустите повторным нажатием пробела. Escape отменяет.',
+  'dnd.picked': 'Элемент {item} взят.',
+  'dnd.over': '{item} сейчас над «{target}».',
+  'dnd.dropped': '{item} помещён в «{target}».',
+  'dnd.returned': '{item} возвращён на место.',
+  'dnd.cancelled': 'Перемещение {item} отменено.',
   'helper.title': 'Помощник по материалу',
   'helper.convert.title': 'Преобразовать в другой тип',
   'helper.convert.hint':
@@ -494,7 +553,6 @@ const ru: Record<TKey, string> = {
     'Для каждого элемента составляется вопрос «к какой группе относится?».',
   'convert.q.pairs': 'Чему соответствует «{term}»?',
   'convert.q.groups': 'К какой группе относится «{item}»?',
-  'convert.ready': 'Будет создано вопросов: {n}',
   'convert.create': 'Создать новое задание',
   'convert.error.tooFewPairs': 'Нужно минимум 2 полные пары.',
   'convert.error.tooFewGroups': 'Нужно минимум 2 группы.',
@@ -516,6 +574,7 @@ const ru: Record<TKey, string> = {
   'template.cell': 'Биология — части клетки',
   'template.food-groups': 'Фрукты и овощи',
   'template.math-quiz': 'Математика — быстрый тест',
+  'template.water': 'Природоведение — вода',
   'subject.math': 'Математика',
   'subject.uzbek': 'Родной язык',
   'subject.english': 'Английский язык',
@@ -581,12 +640,21 @@ const ru: Record<TKey, string> = {
   'print.answerKey': 'Ключ с ответами',
   'print.instructions.pairs': 'Напишите определение для каждого термина.',
   'print.instructions.mcq': 'Отметьте правильный ответ.',
+  'print.instructions.sequence': 'Впишите подходящие слова в пропуски.',
   'print.instructions.groups': 'Впишите элементы в нужную группу.',
   'print.items': 'Элементы',
   'print.empty': 'В этом задании нет материала для печати.',
 }
 
 const dict: Record<Locale, Record<TKey, string>> = { uz, ru }
+
+/**
+ * Every key, in declaration order. `Record<TKey, string>` already makes
+ * TypeScript fail on a key that exists in one locale and not the other, but it
+ * says nothing about the *contents* — a translation that drops a `{placeholder}`
+ * still compiles. Exported so a test can walk the whole dictionary.
+ */
+export const translationKeys = Object.keys(uz) as readonly TKey[]
 
 export type TParams = Record<string, string | number>
 

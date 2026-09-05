@@ -57,7 +57,12 @@ export default function Quiz({ content, settings, onFinish }: GameProps<McqConte
 
   // Time up ends the round immediately with whatever has been scored so far.
   const { remaining, elapsedSec } = useGameClock(settings, () => {
-    onFinish({ score, maxScore: questions.length, durationSec: elapsedSec() })
+    onFinish({
+      score,
+      maxScore: questions.length,
+      durationSec: elapsedSec(),
+      timedOut: true,
+    })
   })
 
   const current = questions[index]
@@ -129,10 +134,18 @@ export default function Quiz({ content, settings, onFinish }: GameProps<McqConte
                 key={`${current.id}-${optionIndex}`}
                 type="button"
                 onClick={() => choose(optionIndex)}
-                disabled={answered}
+                // `aria-disabled`, not `disabled`: answering must not pull the
+                // options out of the tab order, or a keyboard user loses focus
+                // and cannot review the answer `show_answers` just revealed.
+                // `choose` already refuses once answered.
+                aria-disabled={answered}
                 className={optionClass(optionIndex)}
               >
                 {option}
+                {answered && settings.show_answers && optionIndex === correctIndex ? (
+                  // Otherwise the right answer is green and nothing else.
+                  <span className="sr-only"> — {tt('play.correctAnswer')}</span>
+                ) : null}
               </button>
             ))}
           </div>
@@ -142,6 +155,7 @@ export default function Quiz({ content, settings, onFinish }: GameProps<McqConte
       {answered ? (
         <div className="flex flex-col gap-3">
           <p
+            aria-live="polite"
             className={
               picked === correctIndex
                 ? 'text-sm font-medium text-success'

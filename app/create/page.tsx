@@ -9,7 +9,7 @@ import { getLocale } from '@/lib/locale'
 import type { SchemaType } from '@/lib/schemas'
 import { createClient } from '@/lib/supabase/server'
 
-/** Schemas with at least one game in the MVP set. `sequence` has none yet. */
+/** Every schema now has at least one game, so all four are offered. */
 const CHOICES: ReadonlyArray<{
   schemaType: SchemaType
   name: TKey
@@ -23,6 +23,12 @@ const CHOICES: ReadonlyArray<{
     name: 'schema.groups.name',
     hint: 'schema.groups.hint',
     icon: '🗂️',
+  },
+  {
+    schemaType: 'sequence',
+    name: 'schema.sequence.name',
+    hint: 'schema.sequence.hint',
+    icon: '␣',
   },
 ]
 

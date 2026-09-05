@@ -19,11 +19,12 @@ Four content schemas, defined as zod schemas in `lib/schemas.ts` (M2):
 | `groups`   | `{ groups: [{ name, items: string[] }] }` |
 | `sequence` | `{ items: [{ id, text, blanks: number[] }] }` |
 
-`sequence` is defined but no MVP game consumes it, so `/create` does not offer
-it yet — an activity of that type would have nothing to play it with.
+Every schema has at least one game as of M8, so `/create` offers all four.
+`tests/games.test.ts` fails if a schema is ever added without one.
 
-Games are registered in `lib/games.ts`. Adding game #7 means adding one file
+Games are registered in `lib/games.ts`. Adding game #8 means adding one file
 under `components/games/<name>/index.tsx` plus one registry entry — nothing else.
+The landing page reads the list from the registry, so it stays in step.
 
 ## Stack
 
@@ -41,7 +42,15 @@ pnpm install
 cp .env.example .env.local   # fill in the three values
 pnpm dev
 pnpm test                    # unit tests for the content logic
+pnpm e2e                     # Playwright, drives the games in a browser
+pnpm typecheck && pnpm lint
 ```
+
+`pnpm e2e` starts its own server with `DARSLY_E2E=1`, which switches on
+`/dev/game/[game]` — a harness that renders one game over one starter template
+with no activity row, no account and no database. The suite drives that route,
+so a game regression is caught without seeding anything. No deployment sets the
+flag, so the route is a 404 in production.
 
 | Variable | Notes |
 |---|---|
@@ -80,6 +89,7 @@ activity they are allowed to play, and only the owner can read results back.
 | M5 | `/library`, `is_public`, search/filter, `play_count` | done |
 | M6 | `/embed`, `/print`, `/api/results` + results view | done |
 | M7 | Telegram Mini App support | done |
+| M8 | CI, e2e, accessibility, delete, autosave recovery, `fill-blanks` | done |
 
 ## Content generation, without a model
 
@@ -93,6 +103,10 @@ activity is always a **new** row: the source is never touched.
 Alongside it, `lib/import-file.ts` reads CSV and .xlsx in the browser and
 `lib/templates.ts` ships starter sets. Bulk paste, file upload and templates all
 funnel through the same `rowsTo*` functions in `lib/parse.ts`.
+
+`sequence` content is written in the editor as a sentence with the hidden words
+in brackets — `Suv [100] gradusda qaynaydi` — which `parseMarkedSentence` turns
+into the stored `{ text, blanks }`. The brackets never reach the database.
 
 ## Telegram Mini App
 

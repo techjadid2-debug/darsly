@@ -6,6 +6,8 @@ import type {
   McqItem,
   PairItem,
   PairsContent,
+  SequenceContent,
+  SequenceItem,
 } from '@/lib/schemas'
 
 /**
@@ -24,6 +26,13 @@ export type McqDraft = {
   options: string[]
   correctIndex: number
 }
+/**
+ * A sentence is edited as one string with the words to hide in brackets —
+ * `Suv [100] gradusda qaynaydi`. The stored schema wants the plain text plus
+ * the word positions, which is exact but unpleasant to type; the brackets are
+ * the editor's format and never reach the database.
+ */
+export type SequenceDraft = { id: string; markedText: string }
 
 export function emptyPairDraft(): PairDraft {
   return { id: makeId(), term: '', definition: '' }
@@ -31,6 +40,34 @@ export function emptyPairDraft(): PairDraft {
 
 export function emptyMcqDraft(): McqDraft {
   return { id: makeId(), question: '', options: ['', ''], correctIndex: 0 }
+}
+
+export function emptySequenceDraft(): SequenceDraft {
+  return { id: makeId(), markedText: '' }
+}
+
+/** `Suv [100] gradusda qaynaydi` → text without brackets, plus `blanks: [1]`. */
+export function parseMarkedSentence(marked: string): { text: string; blanks: number[] } {
+  const words = marked.trim().split(/\s+/).filter(Boolean)
+  const blanks: number[] = []
+
+  const text = words.map((word, index) => {
+    const inner = /^\[(.+)\]$/.exec(word)?.[1]
+    if (inner === undefined) return word
+    blanks.push(index)
+    return inner
+  })
+
+  return { text: text.join(' '), blanks }
+}
+
+/** The inverse, for loading stored content back into the editor. */
+export function markSentence(item: SequenceItem): string {
+  const blanks = new Set(item.blanks)
+  return item.text
+    .split(/\s+/)
+    .map((word, index) => (blanks.has(index) ? `[${word}]` : word))
+    .join(' ')
 }
 
 export function pairDraftsFrom(content: PairsContent): PairDraft[] {
@@ -77,6 +114,30 @@ export function toPairsContent(rows: readonly PairDraft[]): PairsContent {
         definition: row.definition.trim(),
       })),
   }
+}
+
+export function sequenceDraftsFrom(content: SequenceContent): SequenceDraft[] {
+  return content.items.map((item) => ({ id: item.id, markedText: markSentence(item) }))
+}
+
+export function sequenceItemsToDrafts(items: SequenceItem[]): SequenceDraft[] {
+  return items.map((item) => ({ id: item.id, markedText: markSentence(item) }))
+}
+
+/**
+ * A sentence with no brackets has nothing to answer, so it is dropped the same
+ * way a pair with no definition is — the teacher is still typing it.
+ */
+export function toSequenceContent(rows: readonly SequenceDraft[]): SequenceContent {
+  const items = []
+
+  for (const row of rows) {
+    const { text, blanks } = parseMarkedSentence(row.markedText)
+    if (!text || blanks.length === 0) continue
+    items.push({ id: row.id, text, blanks })
+  }
+
+  return { items }
 }
 
 export function toMcqContent(rows: readonly McqDraft[]): McqContent {
@@ -136,16 +197,29 @@ export function groupsToDrafts(groups: Group[]): GroupDraft[] {
   }))
 }
 
+/**
+ * A group's name is its identity downstream: `group-sort` uses it as the
+ * dnd-kit droppable id and `/print` as a React key, so two rows sharing a name
+ * would collide there and be scored as one group. They are merged here instead
+ * — dropping the second row would silently lose items the teacher typed.
+ */
 export function toGroupsContent(rows: readonly GroupDraft[]): GroupsContent {
-  return {
-    groups: rows
-      .map((row) => ({
-        name: row.name.trim(),
-        items: row.itemsText
-          .split(/\r?\n/)
-          .map((item) => item.trim())
-          .filter((item) => item.length > 0),
-      }))
-      .filter((group) => group.name.length > 0 && group.items.length > 0),
+  const merged = new Map<string, string[]>()
+
+  for (const row of rows) {
+    const name = row.name.trim()
+    if (name.length === 0) continue
+
+    const items = row.itemsText
+      .split(/\r?\n/)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0)
+    if (items.length === 0) continue
+
+    const existing = merged.get(name)
+    if (existing) existing.push(...items)
+    else merged.set(name, items)
   }
+
+  return { groups: [...merged].map(([name, items]) => ({ name, items })) }
 }

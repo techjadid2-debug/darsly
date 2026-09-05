@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { saveActivity } from '@/app/actions/activities'
 import { BulkPasteDialog, type PasteResult } from '@/components/editor/BulkPasteDialog'
@@ -10,6 +10,7 @@ import { GameChips } from '@/components/editor/GameChips'
 import { GroupsTable } from '@/components/editor/GroupsTable'
 import { McqTable } from '@/components/editor/McqTable'
 import { PairsTable } from '@/components/editor/PairsTable'
+import { SequenceTable } from '@/components/editor/SequenceTable'
 import { PublishPanel } from '@/components/editor/PublishPanel'
 import { SettingsPanel } from '@/components/editor/SettingsPanel'
 import { SharePanel } from '@/components/editor/SharePanel'
@@ -20,35 +21,44 @@ import {
   emptyGroupDraft,
   emptyMcqDraft,
   emptyPairDraft,
+  emptySequenceDraft,
   groupDraftsFrom,
   mcqDraftsFrom,
   pairDraftsFrom,
+  sequenceDraftsFrom,
   toGroupsContent,
   toMcqContent,
   toPairsContent,
+  toSequenceContent,
   type GroupDraft,
   type McqDraft,
   type PairDraft,
+  type SequenceDraft,
 } from '@/lib/drafts'
 import { gamesForSchema, getGame, resolveGame } from '@/lib/games'
 import {
+  countItems,
   groupsContentSchema,
   mcqContentSchema,
   pairsContentSchema,
+  sequenceContentSchema,
   type ActivitySettings,
 } from '@/lib/schemas'
 
-/** Schemas the editor can edit. `sequence` has no game in the MVP set. */
-export type EditableSchema = 'pairs' | 'mcq' | 'groups'
+/** Every schema is editable now that `sequence` has a game. */
+export type EditableSchema = 'pairs' | 'mcq' | 'groups' | 'sequence'
 
 type Rows =
   | { schemaType: 'pairs'; rows: PairDraft[] }
   | { schemaType: 'mcq'; rows: McqDraft[] }
   | { schemaType: 'groups'; rows: GroupDraft[] }
+  | { schemaType: 'sequence'; rows: SequenceDraft[] }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 const AUTOSAVE_DELAY_MS = 800
+/** One silent retry rides out a transient blip before the teacher is asked. */
+const RETRY_DELAY_MS = 2000
 
 function initialRows(schemaType: EditableSchema, raw: unknown): Rows {
   if (schemaType === 'pairs') {
@@ -61,9 +71,14 @@ function initialRows(schemaType: EditableSchema, raw: unknown): Rows {
     const rows = parsed.success ? mcqDraftsFrom(parsed.data) : []
     return { schemaType, rows: rows.length ? rows : [emptyMcqDraft()] }
   }
-  const parsed = groupsContentSchema.safeParse(raw)
-  const rows = parsed.success ? groupDraftsFrom(parsed.data) : []
-  return { schemaType, rows: rows.length ? rows : [emptyGroupDraft(), emptyGroupDraft()] }
+  if (schemaType === 'groups') {
+    const parsed = groupsContentSchema.safeParse(raw)
+    const rows = parsed.success ? groupDraftsFrom(parsed.data) : []
+    return { schemaType, rows: rows.length ? rows : [emptyGroupDraft(), emptyGroupDraft()] }
+  }
+  const parsed = sequenceContentSchema.safeParse(raw)
+  const rows = parsed.success ? sequenceDraftsFrom(parsed.data) : []
+  return { schemaType, rows: rows.length ? rows : [emptySequenceDraft()] }
 }
 
 function contentOf(state: Rows): unknown {
@@ -74,6 +89,8 @@ function contentOf(state: Rows): unknown {
       return toMcqContent(state.rows)
     case 'groups':
       return toGroupsContent(state.rows)
+    case 'sequence':
+      return toSequenceContent(state.rows)
   }
 }
 
@@ -89,6 +106,10 @@ function applyPaste(previous: Rows, result: PasteResult, mode: 'append' | 'repla
   if (previous.schemaType === 'groups' && result.schemaType === 'groups') {
     const existing = mode === 'replace' ? [] : previous.rows
     return { schemaType: 'groups', rows: [...existing, ...result.rows] }
+  }
+  if (previous.schemaType === 'sequence' && result.schemaType === 'sequence') {
+    const existing = mode === 'replace' ? [] : previous.rows
+    return { schemaType: 'sequence', rows: [...existing, ...result.rows] }
   }
   return previous
 }
@@ -146,19 +167,53 @@ export function Editor({
   payloadRef.current = payload
   const isFirstRender = useRef(true)
 
+  // Held so a fresh edit supersedes a scheduled retry rather than racing it.
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const save = useCallback(async (attempt = 0): Promise<void> => {
+    setStatus('saving')
+    const result = await saveActivity(payloadRef.current)
+    if (result.ok) {
+      setStatus('saved')
+      return
+    }
+    // Stay in 'saving' through the automatic attempt: it is still trying, and
+    // saying otherwise would ask the teacher to act on a blip that self-heals.
+    if (attempt === 0) {
+      retryTimer.current = setTimeout(() => void save(1), RETRY_DELAY_MS)
+      return
+    }
+    setStatus('error')
+  }, [])
+
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
       return
     }
+    if (retryTimer.current) clearTimeout(retryTimer.current)
     setStatus('saving')
-    const timer = setTimeout(() => {
-      void saveActivity(payloadRef.current).then((result) => {
-        setStatus(result.ok ? 'saved' : 'error')
-      })
-    }, AUTOSAVE_DELAY_MS)
+    const timer = setTimeout(() => void save(), AUTOSAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [serialized])
+  }, [serialized, save])
+
+  useEffect(
+    () => () => {
+      if (retryTimer.current) clearTimeout(retryTimer.current)
+    },
+    [],
+  )
+
+  // The debounce is a window where the last keystrokes exist only in this tab,
+  // and a failed save is that same window held open indefinitely. Both are
+  // worth a browser warning; 'saved' and 'idle' are not.
+  const unsaved = status === 'saving' || status === 'error'
+  useEffect(() => {
+    if (!unsaved) return
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [unsaved])
 
   function addRow() {
     setState((previous) => {
@@ -169,6 +224,8 @@ export function Editor({
           return { schemaType: 'mcq', rows: [...previous.rows, emptyMcqDraft()] }
         case 'groups':
           return { schemaType: 'groups', rows: [...previous.rows, emptyGroupDraft()] }
+        case 'sequence':
+          return { schemaType: 'sequence', rows: [...previous.rows, emptySequenceDraft()] }
       }
     })
   }
@@ -222,11 +279,22 @@ export function Editor({
 
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-medium text-ink">{tt('editor.content')}</h2>
-          <span
-            aria-live="polite"
-            className={status === 'error' ? 'text-sm text-danger' : 'text-sm text-ink-soft'}
-          >
-            {statusLabel[status]}
+          <span className="flex items-center gap-2">
+            <span
+              aria-live="polite"
+              className={status === 'error' ? 'text-sm text-danger' : 'text-sm text-ink-soft'}
+            >
+              {statusLabel[status]}
+            </span>
+            {status === 'error' ? (
+              <button
+                type="button"
+                onClick={() => void save()}
+                className="text-sm font-medium text-brand hover:underline"
+              >
+                {tt('common.retry')}
+              </button>
+            ) : null}
           </span>
         </div>
 
@@ -240,16 +308,26 @@ export function Editor({
             rows={state.rows}
             onChange={(rows) => setState({ schemaType: 'mcq', rows })}
           />
-        ) : (
+        ) : state.schemaType === 'groups' ? (
           <GroupsTable
             rows={state.rows}
             onChange={(rows) => setState({ schemaType: 'groups', rows })}
+          />
+        ) : (
+          <SequenceTable
+            rows={state.rows}
+            onChange={(rows) => setState({ schemaType: 'sequence', rows })}
           />
         )}
 
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={addRow}>
-            + {schemaType === 'groups' ? tt('editor.addGroup') : tt('editor.addRow')}
+            +{' '}
+            {schemaType === 'groups'
+              ? tt('editor.addGroup')
+              : schemaType === 'sequence'
+                ? tt('editor.addSentence')
+                : tt('editor.addRow')}
           </Button>
           <Button variant="secondary" onClick={() => setPasteOpen(true)}>
             {tt('editor.bulkPaste')}
@@ -272,7 +350,13 @@ export function Editor({
         <GameChips games={available} activeId={gameId} onSelect={setGameId} />
 
         <div className="rounded-(--radius-card) border border-border bg-bg p-4">
-          {activeGame ? (
+          {countItems(schemaType, content) === 0 ? (
+            // A half-typed first row would otherwise render the game's own
+            // "nothing here" state, which reads like the game is broken.
+            <p className="py-6 text-center text-sm text-ink-soft">
+              {tt('editor.emptyPreview')}
+            </p>
+          ) : activeGame ? (
             <GameShell
               key={`${activeGame.id}-${JSON.stringify(content)}-${JSON.stringify(settings)}`}
               game={activeGame}

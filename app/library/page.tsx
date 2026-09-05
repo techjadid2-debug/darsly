@@ -5,7 +5,7 @@ import { Footer } from '@/components/layout/Footer'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { gameLabel, games, getGame } from '@/lib/games'
-import { translator } from '@/lib/i18n'
+import { t, translator } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import { countItems, isSchemaType } from '@/lib/schemas'
 import { createClient } from '@/lib/supabase/server'
@@ -13,7 +13,9 @@ import { grades, isGrade, isSubject, subjectKeys, subjects } from '@/lib/taxonom
 
 const PAGE_SIZE = 60
 
-export const metadata = { title: 'Library' }
+export async function generateMetadata() {
+  return { title: t('library.title', await getLocale()) }
+}
 
 export default async function LibraryPage({
   searchParams,

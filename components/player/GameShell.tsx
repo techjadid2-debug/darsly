@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { MotionConfig, motion } from 'framer-motion'
 import { useState } from 'react'
 
 import { useTranslate } from '@/components/LocaleProvider'
@@ -42,49 +42,61 @@ export function GameShell({
 
   if (result) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        data-theme-variant={settings.theme}
-        className="rounded-(--radius-card) border border-border bg-surface px-6 py-10 text-center"
-      >
-        <h2 className="text-xl font-semibold text-ink">{tt('play.done.title')}</h2>
-        <p className="mt-2 text-2xl font-semibold text-brand">
-          {tt('play.done.score', { score: result.score, max: result.maxScore })}
-        </p>
-        <p className="mt-1 text-sm text-ink-soft">
-          {tt('play.done.time', { sec: result.durationSec })}
-        </p>
-        {activityId ? (
-          <div className="mt-6 text-left">
-            <ResultForm activityId={activityId} gameId={game.id} result={result} />
-          </div>
-        ) : null}
+      <MotionConfig reducedMotion="user">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          data-theme-variant={settings.theme}
+          // The game is replaced wholesale by this card, which a screen reader
+          // would otherwise not mention at all.
+          role="status"
+          className="rounded-(--radius-card) border border-border bg-surface px-6 py-10 text-center"
+        >
+          {result.timedOut ? (
+            <p className="mb-2 text-sm font-medium text-danger">{tt('play.timeUp')}</p>
+          ) : null}
+          <h2 className="text-xl font-semibold text-ink">{tt('play.done.title')}</h2>
+          <p className="mt-2 text-2xl font-semibold text-brand">
+            {tt('play.done.score', { score: result.score, max: result.maxScore })}
+          </p>
+          <p className="mt-1 text-sm text-ink-soft">
+            {tt('play.done.time', { sec: result.durationSec })}
+          </p>
+          {activityId ? (
+            <div className="mt-6 text-left">
+              <ResultForm activityId={activityId} gameId={game.id} result={result} />
+            </div>
+          ) : null}
 
-        <div className="mt-6 flex justify-center">
-          <Button
-            size="lg"
-            onClick={() => {
-              setResult(null)
-              setRound((value) => value + 1)
-            }}
-          >
-            {tt('play.restart')}
-          </Button>
-        </div>
-      </motion.div>
+          <div className="mt-6 flex justify-center">
+            <Button
+              size="lg"
+              onClick={() => {
+                setResult(null)
+                setRound((value) => value + 1)
+              }}
+            >
+              {tt('play.restart')}
+            </Button>
+          </div>
+        </motion.div>
+      </MotionConfig>
     )
   }
 
+  // One wrapper for every game, so a student who asked their phone to reduce
+  // motion is not spun through a card flip to get an answer.
   return (
-    <div data-theme-variant={settings.theme}>
-      <GameRenderer
-        key={`${game.id}-${round}`}
-        game={game}
-        rawContent={rawContent}
-        settings={settings}
-        onFinish={finish}
-      />
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div data-theme-variant={settings.theme}>
+        <GameRenderer
+          key={`${game.id}-${round}`}
+          game={game}
+          rawContent={rawContent}
+          settings={settings}
+          onFinish={finish}
+        />
+      </div>
+    </MotionConfig>
   )
 }

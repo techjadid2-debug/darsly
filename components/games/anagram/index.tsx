@@ -13,6 +13,7 @@ import {
   SortableContext,
   arrayMove,
   rectSortingStrategy,
+  sortableKeyboardCoordinates,
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -21,6 +22,7 @@ import { useMemo, useState } from 'react'
 import { useTranslate } from '@/components/LocaleProvider'
 import { Timer } from '@/components/player/Timer'
 import { Button } from '@/components/ui/Button'
+import { dndAccessibility } from '@/lib/dnd-a11y'
 import type { GameProps } from '@/lib/game-types'
 import type { PairsContent } from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
@@ -98,14 +100,22 @@ export default function Anagram({ content, settings, onFinish }: GameProps<Pairs
   )
 
   const { remaining, elapsedSec } = useGameClock(settings, () => {
-    onFinish({ score, maxScore: words.length, durationSec: elapsedSec() })
+    onFinish({
+      score,
+      maxScore: words.length,
+      durationSec: elapsedSec(),
+      timedOut: true,
+    })
   })
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     // A short hold before the drag starts, so the page still scrolls on a phone.
     useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
-    useSensor(KeyboardSensor),
+    // Without `coordinateGetter` the keyboard sensor moves by a fixed pixel
+    // delta, which means nothing to a sortable list: the tiles were focusable
+    // and reorderable by mouse only.
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
   if (!current) return null
@@ -113,6 +123,10 @@ export default function Anagram({ content, settings, onFinish }: GameProps<Pairs
   const solved =
     letters.map((letter) => letter.char).join('').toLocaleLowerCase() ===
     solutionOf(current.term)
+
+  function charOf(id: string): string {
+    return letters.find((letter) => letter.id === id)?.char ?? id
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -155,7 +169,15 @@ export default function Anagram({ content, settings, onFinish }: GameProps<Pairs
         {tt('anagram.hint', { hint: current.definition })}
       </p>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        onDragEnd={handleDragEnd}
+        accessibility={dndAccessibility(tt, {
+          // Both ends of a sortable move are letters.
+          item: charOf,
+          target: charOf,
+        })}
+      >
         <SortableContext
           items={letters.map((letter) => letter.id)}
           strategy={rectSortingStrategy}
@@ -175,7 +197,9 @@ export default function Anagram({ content, settings, onFinish }: GameProps<Pairs
 
       {solved ? (
         <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium text-success">{tt('play.correct')}</p>
+          <p aria-live="polite" className="text-sm font-medium text-success">
+            {tt('play.correct')}
+          </p>
           <Button size="lg" onClick={advance}>
             {index === words.length - 1 ? tt('play.finish') : tt('play.next')}
           </Button>

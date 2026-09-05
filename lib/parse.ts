@@ -1,5 +1,6 @@
+import { parseMarkedSentence } from '@/lib/drafts'
 import { makeId } from '@/lib/ids'
-import type { Group, McqItem, PairItem } from '@/lib/schemas'
+import type { Group, McqItem, PairItem, SequenceItem } from '@/lib/schemas'
 
 /**
  * Import plumbing shared by bulk paste and file upload.
@@ -113,6 +114,28 @@ export function rowsToGroups(rows: string[][]): PasteReport<Group> {
   }
 }
 
+/**
+ * Sequence content is one sentence per line, not columns — a sentence has
+ * commas and tabs in it, so splitting it would mangle the text. The whole row
+ * is rejoined and the brackets carry the blanks.
+ */
+export function rowsToSequence(rows: string[][]): PasteReport<SequenceItem> {
+  const items: SequenceItem[] = []
+  let skipped = 0
+
+  rows.forEach((row, index) => {
+    const { text, blanks } = parseMarkedSentence(row.join(' '))
+    if (!text || blanks.length === 0) {
+      skipped += 1
+      return
+    }
+    items.push({ id: `seq-${index}`, text, blanks })
+  })
+
+  return { items, skipped }
+}
+
 export const parsePairsPaste = (text: string) => rowsToPairs(textToRows(text))
 export const parseMcqPaste = (text: string) => rowsToMcq(textToRows(text))
 export const parseGroupsPaste = (text: string) => rowsToGroups(textToRows(text))
+export const parseSequencePaste = (text: string) => rowsToSequence(textToRows(text))

@@ -9,12 +9,20 @@ import './globals.css'
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin', 'cyrillic'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  title: {
-    default: `${t('app.name')} — ${t('app.tagline')}`,
-    template: `%s — ${t('app.name')}`,
-  },
-  description: t('hero.subtitle'),
+/**
+ * `metadata` cannot read the locale cookie, so calling `t()` there pinned the
+ * tab title, the meta description and every share preview to Uzbek — including
+ * for a reader who had switched the app to Russian.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale()
+  return {
+    title: {
+      default: `${t('app.name', locale)} — ${t('app.tagline', locale)}`,
+      template: `%s — ${t('app.name', locale)}`,
+    },
+    description: t('hero.subtitle', locale),
+  }
 }
 
 export const viewport: Viewport = {

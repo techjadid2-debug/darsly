@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
 
 import Anagram from '@/components/games/anagram'
+import FillBlanks from '@/components/games/fill-blanks'
 import Flashcards from '@/components/games/flashcards'
 import GroupSort from '@/components/games/group-sort'
 import MatchingPairs from '@/components/games/matching-pairs'
@@ -36,6 +37,14 @@ export type GameEntry =
   | Entry<'sequence'>
 
 export const games: readonly GameEntry[] = [
+  {
+    id: 'fill-blanks',
+    label_uz: t('game.fill-blanks', 'uz'),
+    label_ru: t('game.fill-blanks', 'ru'),
+    schemaType: 'sequence',
+    Component: FillBlanks,
+    icon: '␣',
+  },
   {
     id: 'quiz',
     label_uz: t('game.quiz', 'uz'),

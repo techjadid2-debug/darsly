@@ -1,14 +1,29 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { moveRow, toGroupsContent, toMcqContent, toPairsContent } from '@/lib/drafts'
-import { parseGroupsPaste, parseMcqPaste, parsePairsPaste, splitColumns } from '@/lib/parse'
+import {
+  markSentence,
+  moveRow,
+  parseMarkedSentence,
+  toGroupsContent,
+  toMcqContent,
+  toPairsContent,
+  toSequenceContent,
+} from '@/lib/drafts'
+import {
+  parseGroupsPaste,
+  parseMcqPaste,
+  parsePairsPaste,
+  parseSequencePaste,
+  splitColumns,
+} from '@/lib/parse'
 import {
   countItems,
   groupsContentSchema,
   mcqContentSchema,
   pairsContentSchema,
   parseSettings,
+  sequenceContentSchema,
 } from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
 
@@ -171,6 +186,72 @@ test('a group with no name or no items is not saved', () => {
   assert.equal(content.groups.length, 1)
   assert.deepEqual(content.groups[0], { name: 'Mevalar', items: ['olma', 'anor'] })
   assert.ok(groupsContentSchema.safeParse(content).success)
+})
+
+test('two editor rows sharing a name become one group, keeping both sets', () => {
+  // `group-sort` uses the name as its dnd-kit droppable id and `/print` as a
+  // React key, so two groups called the same thing would collide and score as
+  // one. `parseGroupsPaste` already merges; the editor path must agree.
+  const content = toGroupsContent([
+    { id: '1', name: 'Mevalar', itemsText: 'olma\nanor' },
+    { id: '2', name: 'Sabzavotlar', itemsText: 'sabzi' },
+    { id: '3', name: '  Mevalar  ', itemsText: 'uzum' },
+  ])
+
+  const names = content.groups.map((group) => group.name)
+  assert.equal(new Set(names).size, names.length, 'a name is repeated downstream')
+  assert.equal(content.groups.length, 2)
+  assert.deepEqual(content.groups[0], {
+    name: 'Mevalar',
+    items: ['olma', 'anor', 'uzum'],
+  })
+  assert.ok(groupsContentSchema.safeParse(content).success)
+})
+
+// ── sequence ──────────────────────────────────────────────────────────────────
+
+test('brackets in a sentence become blank positions, and survive the round trip', () => {
+  const { text, blanks } = parseMarkedSentence('Suv [100] gradusda [qaynaydi]')
+  assert.equal(text, 'Suv 100 gradusda qaynaydi', 'brackets must not reach the database')
+  assert.deepEqual(blanks, [1, 3])
+
+  // The editor loads stored content back into the same bracket form.
+  assert.equal(
+    markSentence({ id: 'x', text, blanks }),
+    'Suv [100] gradusda [qaynaydi]',
+  )
+})
+
+test('a sentence with no brackets has nothing to answer and is not saved', () => {
+  const content = toSequenceContent([
+    { id: '1', markedText: 'Suv [100] gradusda qaynaydi' },
+    { id: '2', markedText: 'Bu gapda bo\u2018shliq yo\u2018q' },
+    { id: '3', markedText: '   ' },
+  ])
+
+  assert.equal(content.items.length, 1)
+  assert.deepEqual(content.items[0], {
+    id: '1',
+    text: 'Suv 100 gradusda qaynaydi',
+    blanks: [1],
+  })
+  assert.ok(sequenceContentSchema.safeParse(content).success)
+})
+
+test('irregular spacing does not shift the blank positions', () => {
+  // A teacher pasting from a document brings double spaces and newlines with it.
+  const { text, blanks } = parseMarkedSentence('  Suv   [100]\n gradusda qaynaydi  ')
+  assert.equal(text, 'Suv 100 gradusda qaynaydi')
+  assert.deepEqual(blanks, [1])
+})
+
+test('sequence paste takes one sentence per line and skips the unmarked ones', () => {
+  const { items, skipped } = parseSequencePaste(
+    'Suv [100] gradusda qaynaydi\nBo\u2018shliqsiz gap\nSuv [0] gradusda muzlaydi',
+  )
+  assert.equal(items.length, 2)
+  assert.equal(skipped, 1)
+  assert.deepEqual(items[0]?.blanks, [1])
 })
 
 // ── settings ──────────────────────────────────────────────────────────────────
