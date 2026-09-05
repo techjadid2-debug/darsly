@@ -18,11 +18,6 @@ import { isSchemaType, schemaTypes, type SchemaType } from '@/lib/schemas'
  * edit below.
  */
 
-/** Schemas that currently have no game. `sequence` is the one, until M8. */
-const orphanSchemas: SchemaType[] = schemaTypes.filter(
-  (schemaType) => gamesForSchema(schemaType).length === 0,
-)
-
 test('every registry entry has a unique id and a known schema type', () => {
   const ids = games.map((game) => game.id)
   assert.equal(new Set(ids).size, ids.length, 'duplicate game id in the registry')
@@ -100,9 +95,23 @@ test('a stored default that no longer fits falls back to the first game', () => 
   assert.equal(resolveGame('pairs', null, 'deleted-game')?.id, pairsDefault.id)
 })
 
-test('a schema with no games resolves to nothing rather than the wrong game', () => {
-  for (const schemaType of orphanSchemas) {
-    assert.equal(defaultGameFor(schemaType), undefined)
-    assert.equal(resolveGame(schemaType, 'quiz', 'quiz'), undefined)
+test('every schema has a game, so no content type can be created unplayable', () => {
+  // `sequence` was the last orphan: `/create` had to hide it, and `/play` would
+  // have shown an error for an activity nothing could render. If a schema is
+  // added to `schemaTypes` without a game, this is where it surfaces.
+  for (const schemaType of schemaTypes) {
+    assert.ok(
+      gamesForSchema(schemaType).length > 0,
+      `no game renders "${schemaType}" content`,
+    )
+    assert.ok(defaultGameFor(schemaType), `"${schemaType}" has no default game`)
   }
+})
+
+test('a schema with no games would resolve to nothing rather than the wrong game', () => {
+  // There is no such schema any more, so the guard is exercised through a type
+  // that was never registered — the branch still has to hold for a future one.
+  const unregistered = 'timeline' as SchemaType
+  assert.equal(defaultGameFor(unregistered), undefined)
+  assert.equal(resolveGame(unregistered, 'quiz', 'quiz'), undefined)
 })

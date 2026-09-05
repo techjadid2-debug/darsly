@@ -4,22 +4,30 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useTranslate } from '@/components/LocaleProvider'
 import { Button } from '@/components/ui/Button'
-import { parseGroupsPaste, parseMcqPaste, parsePairsPaste } from '@/lib/parse'
+import {
+  parseGroupsPaste,
+  parseMcqPaste,
+  parsePairsPaste,
+  parseSequencePaste,
+} from '@/lib/parse'
 import {
   groupsToDrafts,
   mcqItemsToDrafts,
   pairItemsToDrafts,
+  sequenceItemsToDrafts,
   type GroupDraft,
   type McqDraft,
   type PairDraft,
+  type SequenceDraft,
 } from '@/lib/drafts'
 
-export type PasteSchema = 'pairs' | 'mcq' | 'groups'
+export type PasteSchema = 'pairs' | 'mcq' | 'groups' | 'sequence'
 
 export type PasteResult =
   | { schemaType: 'pairs'; rows: PairDraft[]; skipped: number }
   | { schemaType: 'mcq'; rows: McqDraft[]; skipped: number }
   | { schemaType: 'groups'; rows: GroupDraft[]; skipped: number }
+  | { schemaType: 'sequence'; rows: SequenceDraft[]; skipped: number }
 
 function parseFor(schemaType: PasteSchema, text: string): PasteResult {
   if (schemaType === 'pairs') {
@@ -30,14 +38,19 @@ function parseFor(schemaType: PasteSchema, text: string): PasteResult {
     const report = parseMcqPaste(text)
     return { schemaType, rows: mcqItemsToDrafts(report.items), skipped: report.skipped }
   }
-  const report = parseGroupsPaste(text)
-  return { schemaType, rows: groupsToDrafts(report.items), skipped: report.skipped }
+  if (schemaType === 'groups') {
+    const report = parseGroupsPaste(text)
+    return { schemaType, rows: groupsToDrafts(report.items), skipped: report.skipped }
+  }
+  const report = parseSequencePaste(text)
+  return { schemaType, rows: sequenceItemsToDrafts(report.items), skipped: report.skipped }
 }
 
 const HINTS = {
   pairs: 'paste.pairsHint',
   mcq: 'paste.mcqHint',
   groups: 'paste.groupsHint',
+  sequence: 'paste.sequenceHint',
 } as const
 
 /**

@@ -26,7 +26,7 @@ const uz = {
   'common.dashboard': 'Mashqlarim',
   'common.cancel': 'Bekor qilish',
 
-  'hero.title': 'Bir marta kiriting — oltita o‘yin chiqsin',
+  'hero.title': 'Bir marta kiriting — bir nechta o‘yin chiqsin',
   'hero.subtitle':
     'So‘z juftliklari, savollar yoki kategoriyalarni bir marta kiritasiz. Ular o‘zi viktorina, moslashtirish, kartochka va boshqa interaktiv o‘yinlarga aylanadi.',
   'hero.ctaPrimary': 'Bepul boshlash',
@@ -45,6 +45,7 @@ const uz = {
 
   'games.title': 'Mavjud o‘yinlar',
   'game.quiz': 'Viktorina',
+  'game.fill-blanks': 'Bo‘shliqni to‘ldirish',
   'game.match-up': 'Moslashtirish',
   'game.flashcards': 'Kartochkalar',
   'game.matching-pairs': 'Juftini top',
@@ -128,6 +129,8 @@ const uz = {
     'Har qatorda avval atama, keyin ta’rif. Excel’dagi ikkita ustunni nusxalab, shu yerga joylashtiring.',
   'paste.mcqHint':
     'Har qatorda avval savol, keyin to‘g‘ri javob, keyin noto‘g‘ri variantlar.',
+  'paste.sequenceHint':
+    'Har qatorda bitta gap. Yashiriladigan so‘zni kvadrat qavsga oling: Suv [100] gradusda qaynaydi.',
   'paste.placeholder': 'Shu yerga joylashtiring…',
   'paste.append': 'Qo‘shish',
   'paste.replace': 'Butunlay almashtirish',
@@ -158,12 +161,20 @@ const uz = {
   'matchup.dropHere': 'Bu yerga tashlang',
   'matchup.pool': 'Ta’riflar',
   'matchup.remaining': 'Qoldi: {n}',
+  'schema.sequence.name': 'Bo‘shliqli gaplar',
+  'schema.sequence.hint':
+    'Gaplar va ulardagi yashiriladigan so‘zlar. Bo‘shliqni to‘ldirish uchun.',
   'schema.groups.name': 'Kategoriyalar',
   'schema.groups.hint': 'Guruh nomlari va ularga tegishli elementlar. Guruhlarga ajratish uchun.',
 
   'editor.groupName': 'Guruh nomi',
   'editor.groupItems': 'Elementlar — har qatorda bittadan',
   'editor.addGroup': 'Guruh qo‘shish',
+  'editor.addSentence': 'Gap qo‘shish',
+  'editor.sentence': 'Gap',
+  'editor.sentencePlaceholder': 'Suv [100] gradusda qaynaydi',
+  'editor.blanksHint':
+    'Yashirmoqchi bo‘lgan so‘zni kvadrat qavsga oling: Suv [100] gradusda qaynaydi.',
   'editor.groupLabel': '{n}-guruh',
   'paste.groupsHint':
     'Har qatorda avval guruh nomi, keyin unga tegishli elementlar. Bir guruh nomi bir necha marta uchrasa, elementlar birlashtiriladi.',
@@ -197,6 +208,10 @@ const uz = {
   'anagram.instruction': 'Harflarni surib, to‘g‘ri so‘zni yig‘ing.',
   'anagram.hint': 'Yordam: {hint}',
   'anagram.progress': 'So‘z {current} / {total}',
+  'blanks.instruction': 'Bo‘sh joylarga to‘g‘ri so‘zlarni qo‘ying.',
+  'blanks.bank': 'So‘zlar',
+  'blanks.blank': '{n}-bo‘sh joy',
+  'blanks.filled': '{n}-bo‘sh joy: {word}',
   'dnd.instructions':
     'Elementni olish uchun probel yoki Enter tugmasini bosing. Strelkalar bilan ko‘chiring, qo‘yish uchun yana probelni bosing. Escape bekor qiladi.',
   'dnd.picked': '{item} olindi.',
@@ -240,6 +255,7 @@ const uz = {
   'template.cell': 'Biologiya — hujayra qismlari',
   'template.food-groups': 'Mevalar va sabzavotlar',
   'template.math-quiz': 'Matematika — tezkor test',
+  'template.water': 'Tabiatshunoslik — suv',
   'subject.math': 'Matematika',
   'subject.uzbek': 'Ona tili',
   'subject.english': 'Ingliz tili',
@@ -305,6 +321,7 @@ const uz = {
   'print.answerKey': 'Javoblar kaliti',
   'print.instructions.pairs': 'Har bir atamaning ta’rifini yozing.',
   'print.instructions.mcq': 'To‘g‘ri javobni belgilang.',
+  'print.instructions.sequence': 'Bo‘sh joylarga mos so‘zlarni yozing.',
   'print.instructions.groups':
     'Quyidagi elementlarni to‘g‘ri guruhga yozing.',
   'print.items': 'Elementlar',
@@ -327,7 +344,7 @@ const ru: Record<TKey, string> = {
   'common.dashboard': 'Мои задания',
   'common.cancel': 'Отмена',
 
-  'hero.title': 'Введите один раз — получите шесть игр',
+  'hero.title': 'Введите один раз — получите несколько игр',
   'hero.subtitle':
     'Вы один раз вводите пары слов, вопросы или категории. Они сами превращаются в викторину, сопоставление, карточки и другие интерактивные игры.',
   'hero.ctaPrimary': 'Начать бесплатно',
@@ -346,6 +363,7 @@ const ru: Record<TKey, string> = {
 
   'games.title': 'Доступные игры',
   'game.quiz': 'Викторина',
+  'game.fill-blanks': 'Заполни пропуски',
   'game.match-up': 'Сопоставление',
   'game.flashcards': 'Карточки',
   'game.matching-pairs': 'Найди пару',
@@ -428,6 +446,8 @@ const ru: Record<TKey, string> = {
     'В каждой строке сначала термин, затем определение. Скопируйте два столбца из Excel и вставьте сюда.',
   'paste.mcqHint':
     'В каждой строке сначала вопрос, затем правильный ответ, затем неправильные варианты.',
+  'paste.sequenceHint':
+    'По одному предложению в строке. Скрываемое слово — в квадратных скобках: Вода кипит при [100] градусах.',
   'paste.placeholder': 'Вставьте сюда…',
   'paste.append': 'Добавить',
   'paste.replace': 'Заменить полностью',
@@ -459,6 +479,9 @@ const ru: Record<TKey, string> = {
   'matchup.dropHere': 'Перетащите сюда',
   'matchup.pool': 'Определения',
   'matchup.remaining': 'Осталось: {n}',
+  'schema.sequence.name': 'Предложения с пропусками',
+  'schema.sequence.hint':
+    'Предложения и слова, которые нужно скрыть. Для заполнения пропусков.',
   'schema.groups.name': 'Категории',
   'schema.groups.hint':
     'Названия групп и относящиеся к ним элементы. Для сортировки по группам.',
@@ -466,6 +489,11 @@ const ru: Record<TKey, string> = {
   'editor.groupName': 'Название группы',
   'editor.groupItems': 'Элементы — по одному в строке',
   'editor.addGroup': 'Добавить группу',
+  'editor.addSentence': 'Добавить предложение',
+  'editor.sentence': 'Предложение',
+  'editor.sentencePlaceholder': 'Вода кипит при [100] градусах',
+  'editor.blanksHint':
+    'Возьмите скрываемое слово в квадратные скобки: Вода кипит при [100] градусах.',
   'editor.groupLabel': 'Группа {n}',
   'paste.groupsHint':
     'В каждой строке сначала название группы, затем её элементы. Если название повторяется, элементы объединяются.',
@@ -499,6 +527,10 @@ const ru: Record<TKey, string> = {
   'anagram.instruction': 'Переставьте буквы и соберите слово.',
   'anagram.hint': 'Подсказка: {hint}',
   'anagram.progress': 'Слово {current} / {total}',
+  'blanks.instruction': 'Вставьте нужные слова в пропуски.',
+  'blanks.bank': 'Слова',
+  'blanks.blank': 'Пропуск {n}',
+  'blanks.filled': 'Пропуск {n}: {word}',
   'dnd.instructions':
     'Нажмите пробел или Enter, чтобы взять элемент. Перемещайте стрелками, отпустите повторным нажатием пробела. Escape отменяет.',
   'dnd.picked': 'Элемент {item} взят.',
@@ -542,6 +574,7 @@ const ru: Record<TKey, string> = {
   'template.cell': 'Биология — части клетки',
   'template.food-groups': 'Фрукты и овощи',
   'template.math-quiz': 'Математика — быстрый тест',
+  'template.water': 'Природоведение — вода',
   'subject.math': 'Математика',
   'subject.uzbek': 'Родной язык',
   'subject.english': 'Английский язык',
@@ -607,6 +640,7 @@ const ru: Record<TKey, string> = {
   'print.answerKey': 'Ключ с ответами',
   'print.instructions.pairs': 'Напишите определение для каждого термина.',
   'print.instructions.mcq': 'Отметьте правильный ответ.',
+  'print.instructions.sequence': 'Впишите подходящие слова в пропуски.',
   'print.instructions.groups': 'Впишите элементы в нужную группу.',
   'print.items': 'Элементы',
   'print.empty': 'В этом задании нет материала для печати.',

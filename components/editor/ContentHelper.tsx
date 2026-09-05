@@ -14,12 +14,14 @@ import {
   mcqItemsToDrafts,
   pairDraftsFrom,
   pairItemsToDrafts,
+  sequenceDraftsFrom,
+  sequenceItemsToDrafts,
 } from '@/lib/drafts'
 import { readSpreadsheet } from '@/lib/import-file'
-import { rowsToGroups, rowsToMcq, rowsToPairs } from '@/lib/parse'
+import { rowsToGroups, rowsToMcq, rowsToPairs, rowsToSequence } from '@/lib/parse'
 import { templatesFor } from '@/lib/templates'
 
-type HelperSchema = 'pairs' | 'mcq' | 'groups'
+type HelperSchema = 'pairs' | 'mcq' | 'groups' | 'sequence'
 
 function rowsToResult(schemaType: HelperSchema, rows: string[][]): PasteResult {
   if (schemaType === 'pairs') {
@@ -30,8 +32,12 @@ function rowsToResult(schemaType: HelperSchema, rows: string[][]): PasteResult {
     const report = rowsToMcq(rows)
     return { schemaType, rows: mcqItemsToDrafts(report.items), skipped: report.skipped }
   }
-  const report = rowsToGroups(rows)
-  return { schemaType, rows: groupsToDrafts(report.items), skipped: report.skipped }
+  if (schemaType === 'groups') {
+    const report = rowsToGroups(rows)
+    return { schemaType, rows: groupsToDrafts(report.items), skipped: report.skipped }
+  }
+  const report = rowsToSequence(rows)
+  return { schemaType, rows: sequenceItemsToDrafts(report.items), skipped: report.skipped }
 }
 
 /**
@@ -146,11 +152,20 @@ export function ContentHelper({
                           },
                           'replace',
                         )
-                      } else {
+                      } else if (template.schemaType === 'groups') {
                         onApply(
                           {
                             schemaType: 'groups',
                             rows: groupDraftsFrom(template.content),
+                            skipped: 0,
+                          },
+                          'replace',
+                        )
+                      } else {
+                        onApply(
+                          {
+                            schemaType: 'sequence',
+                            rows: sequenceDraftsFrom(template.content),
                             skipped: 0,
                           },
                           'replace',

@@ -1,5 +1,11 @@
 import type { TKey } from '@/lib/i18n'
-import type { GroupsContent, McqContent, PairsContent, SchemaType } from '@/lib/schemas'
+import type {
+  GroupsContent,
+  McqContent,
+  PairsContent,
+  SchemaType,
+  SequenceContent,
+} from '@/lib/schemas'
 
 /**
  * Ready-made starter content. Ids are stable strings rather than generated
@@ -10,6 +16,7 @@ export type Template =
   | { id: string; nameKey: TKey; schemaType: 'pairs'; content: PairsContent }
   | { id: string; nameKey: TKey; schemaType: 'mcq'; content: McqContent }
   | { id: string; nameKey: TKey; schemaType: 'groups'; content: GroupsContent }
+  | { id: string; nameKey: TKey; schemaType: 'sequence'; content: SequenceContent }
 
 const pairs = (id: string, rows: ReadonlyArray<[string, string]>): PairsContent => ({
   items: rows.map(([term, definition], index) => ({
@@ -115,6 +122,20 @@ export const templates: readonly Template[] = [
           options: ['180°', '90°', '270°', '360°'],
           correct_index: 0,
         },
+      ],
+    },
+  },
+  {
+    id: 'water',
+    nameKey: 'template.water',
+    schemaType: 'sequence',
+    content: {
+      items: [
+        { id: 'w-0', text: 'Suv 100 gradusda qaynaydi', blanks: [1] },
+        { id: 'w-1', text: 'Suv 0 gradusda muzlaydi', blanks: [1] },
+        { id: 'w-2', text: 'Yomg‘ir bulutdan yerga tushadi', blanks: [1] },
+        { id: 'w-3', text: 'Quyosh nuri suvni bug‘ga aylantiradi', blanks: [3] },
+        { id: 'w-4', text: 'Daryolar suvni dengizga olib boradi', blanks: [2] },
       ],
     },
   },

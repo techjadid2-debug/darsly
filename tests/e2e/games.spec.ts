@@ -13,6 +13,7 @@ const RENDERS: ReadonlyArray<{ game: string; template: string; expect: string }>
   { game: 'matching-pairs', template: 'en-basics', expect: 'Ikkita katakchani oching' },
   { game: 'anagram', template: 'en-basics', expect: 'Harflarni surib' },
   { game: 'group-sort', template: 'food-groups', expect: 'Mevalar' },
+  { game: 'fill-blanks', template: 'water', expect: 'Bo‘sh joylarga' },
 ]
 
 for (const { game, template, expect: text } of RENDERS) {
@@ -57,6 +58,23 @@ test('flashcards plays through to a score', async ({ page }) => {
 
   await expect(page.getByText('Tugadi!')).toBeVisible()
   await expect(page.getByText('10 / 10')).toBeVisible()
+})
+
+test('fill-blanks scores a sentence filled from the word bank', async ({ page }) => {
+  await page.goto('/dev/game/fill-blanks?template=water&shuffle=0')
+
+  // The first sentence hides one word, so the bank holds exactly one chip.
+  const bank = page.locator('main ul button')
+  await expect(bank).toHaveCount(1)
+
+  const slot = page.getByRole('button', { name: '1-bo‘sh joy' })
+  await expect(slot).toBeVisible()
+  await bank.first().click()
+
+  // Filling the slot renames it and enables the check.
+  await expect(page.getByRole('button', { name: /1-bo‘sh joy: / })).toBeVisible()
+  await page.getByRole('button', { name: 'Tekshirish' }).click()
+  await expect(page.getByText('To‘g‘ri!')).toBeVisible()
 })
 
 test('running out of time says so instead of just ending', async ({ page }) => {

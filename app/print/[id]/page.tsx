@@ -8,6 +8,7 @@ import {
   isSchemaType,
   mcqContentSchema,
   pairsContentSchema,
+  sequenceContentSchema,
   type SchemaType,
 } from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
@@ -22,7 +23,7 @@ const INSTRUCTIONS = {
   pairs: 'print.instructions.pairs',
   mcq: 'print.instructions.mcq',
   groups: 'print.instructions.groups',
-  sequence: 'print.instructions.pairs',
+  sequence: 'print.instructions.sequence',
 } as const satisfies Record<SchemaType, string>
 
 /** A ruled blank line for the student to write on. */
@@ -135,6 +136,50 @@ function buildSheet(
             </li>
           ))}
         </ul>
+      ),
+    }
+  }
+
+  if (schemaType === 'sequence') {
+    const parsed = sequenceContentSchema.safeParse(content)
+    if (!parsed.success || parsed.data.items.length === 0) return null
+    const items = parsed.data.items
+
+    /** The sentence with its blanked words replaced by a rule to write on. */
+    const withBlanks = (text: string, blanks: readonly number[]) => {
+      const hidden = new Set(blanks)
+      return text
+        .split(/\s+/)
+        .map((word, index) => (hidden.has(index) ? '__________' : word))
+        .join(' ')
+    }
+
+    return {
+      worksheet: (
+        <ol className="flex flex-col gap-4">
+          {items.map((item, index) => (
+            <li key={item.id} className="flex gap-2">
+              <span className="font-medium">{index + 1}.</span>
+              <span>{withBlanks(item.text, item.blanks)}</span>
+            </li>
+          ))}
+        </ol>
+      ),
+      answerKey: (
+        <ol className="flex flex-col gap-1">
+          {items.map((item, index) => {
+            const words = item.text.split(/\s+/)
+            return (
+              <li key={item.id}>
+                {index + 1}.{' '}
+                {[...item.blanks]
+                  .sort((a, b) => a - b)
+                  .map((position) => words[position])
+                  .join(', ')}
+              </li>
+            )
+          })}
+        </ol>
       ),
     }
   }
