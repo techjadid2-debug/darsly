@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/Button'
 import type { GameProps } from '@/lib/game-types'
 import type { GroupsContent } from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
+import { dndAccessibility } from '@/lib/dnd-a11y'
 import { useGameClock } from '@/lib/use-game-clock'
 
 const POOL_ID = '__pool__'
@@ -136,8 +137,19 @@ export default function GroupSort({
   const score = items.filter((item) => placement[item.id] === item.correctGroup).length
 
   const { remaining, elapsedSec } = useGameClock(settings, () => {
-    onFinish({ score, maxScore: items.length, durationSec: elapsedSec() })
+    onFinish({
+      score,
+      maxScore: items.length,
+      durationSec: elapsedSec(),
+      timedOut: true,
+    })
   })
+
+  // Group names are the droppable ids here, so a target mostly names itself.
+  const labels = {
+    item: (id: string) => items.find((item) => item.id === id)?.label ?? id,
+    target: (id: string) => (id === POOL_ID ? tt('groupsort.pool') : id),
+  }
 
   function handleDragStart(event: DragStartEvent) {
     setDragging(String(event.active.id))
@@ -166,7 +178,12 @@ export default function GroupSort({
     : undefined
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      accessibility={dndAccessibility(tt, labels)}
+    >
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3 text-sm text-ink-soft">
           <span>{tt('groupsort.instruction')}</span>
@@ -200,7 +217,7 @@ export default function GroupSort({
         </DropZone>
 
         {checked ? (
-          <div className="flex flex-col gap-3">
+          <div role="status" className="flex flex-col gap-3">
             {settings.show_answers ? (
               <ul className="flex flex-col gap-1 text-sm text-ink-soft">
                 {items

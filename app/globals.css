@@ -121,3 +121,21 @@ body {
     break-inside: avoid;
   }
 }
+
+/*
+ * Framer's animations are handled by `<MotionConfig reducedMotion="user">` in
+ * the player shell; this covers everything else — Tailwind's `transition-*`
+ * utilities, hover fades, the tile scale. Kept as `!important` so a utility
+ * class cannot win, and as `0.01ms` rather than `0` so transition-end handlers
+ * still fire.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

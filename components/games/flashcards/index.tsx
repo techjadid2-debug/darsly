@@ -11,6 +11,9 @@ import type { PairsContent } from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
 import { useGameClock } from '@/lib/use-game-clock'
 
+// `backfaceVisibility` hides the far face visually but leaves it in the
+// accessibility tree, so each face is also gated with `aria-hidden` below —
+// otherwise a screen reader reads the answer before the card is flipped.
 const faceStyle: React.CSSProperties = {
   backfaceVisibility: 'hidden',
   WebkitBackfaceVisibility: 'hidden',
@@ -32,7 +35,12 @@ export default function Flashcards({
   const [known, setKnown] = useState(0)
 
   const { remaining, elapsedSec } = useGameClock(settings, () => {
-    onFinish({ score: known, maxScore: cards.length, durationSec: elapsedSec() })
+    onFinish({
+      score: known,
+      maxScore: cards.length,
+      durationSec: elapsedSec(),
+      timedOut: true,
+    })
   })
 
   const card = cards[index]
@@ -64,10 +72,13 @@ export default function Flashcards({
         </span>
       </div>
 
+      {/* No `aria-label` here: it would override the accessible name and hide
+          the card's own text, which is the one thing worth announcing. The
+          name comes from whichever face is not `aria-hidden`. */}
       <button
         type="button"
         onClick={() => setFlipped((value) => !value)}
-        aria-label={tt('flash.tapToFlip')}
+        aria-expanded={flipped}
         className="relative block h-56 w-full [perspective:1200px]"
       >
         <motion.div
@@ -79,6 +90,7 @@ export default function Flashcards({
         >
           <div
             style={faceStyle}
+            aria-hidden={flipped}
             className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-(--radius-card) border border-border bg-surface p-5"
           >
             <span className="text-2xl font-semibold text-ink">{card.term}</span>
@@ -87,6 +99,7 @@ export default function Flashcards({
 
           <div
             style={{ ...faceStyle, transform: 'rotateY(180deg)' }}
+            aria-hidden={!flipped}
             className="absolute inset-0 flex items-center justify-center rounded-(--radius-card) border border-brand bg-brand-soft p-5"
           >
             <span className="text-center text-xl font-medium text-ink">

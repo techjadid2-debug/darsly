@@ -18,6 +18,7 @@ import { useMemo, useState } from 'react'
 import { useTranslate } from '@/components/LocaleProvider'
 import { Timer } from '@/components/player/Timer'
 import { Button } from '@/components/ui/Button'
+import { dndAccessibility } from '@/lib/dnd-a11y'
 import { useGameClock } from '@/lib/use-game-clock'
 import type { GameProps } from '@/lib/game-types'
 import type { PairsContent } from '@/lib/schemas'
@@ -162,8 +163,23 @@ export default function MatchUp({
 
   // Time up scores whatever is already placed correctly.
   const { remaining, elapsedSec } = useGameClock(settings, () => {
-    onFinish({ score, maxScore: pairs.length, durationSec: elapsedSec() })
+    onFinish({
+      score,
+      maxScore: pairs.length,
+      durationSec: elapsedSec(),
+      timedOut: true,
+    })
   })
+
+  // A pair id is both the definition being dragged and the term slot it can
+  // land in, which is why the two resolvers are separate.
+  const labels = {
+    item: (id: string) => content.items.find((pair) => pair.id === id)?.definition ?? id,
+    target: (id: string) =>
+      id === POOL_ID
+        ? tt('matchup.pool')
+        : (content.items.find((pair) => pair.id === id)?.term ?? id),
+  }
 
   function handleDragStart(event: DragStartEvent) {
     setDragging(String(event.active.id))
@@ -205,6 +221,7 @@ export default function MatchUp({
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      accessibility={dndAccessibility(tt, labels)}
     >
       <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between gap-3 text-sm text-ink-soft">
@@ -252,7 +269,7 @@ export default function MatchUp({
         </DefinitionPool>
 
         {checked ? (
-          <div className="flex flex-col gap-3">
+          <div role="status" className="flex flex-col gap-3">
             <p className="text-sm font-medium text-ink">
               {tt('play.done.score', { score, max: pairs.length })}
             </p>

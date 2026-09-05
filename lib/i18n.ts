@@ -138,6 +138,7 @@ const uz = {
   'play.score': 'Ball: {score}',
   'play.correct': 'To‘g‘ri!',
   'play.wrong': 'Noto‘g‘ri',
+  'play.correctAnswer': 'To‘g‘ri javob',
   'play.next': 'Keyingi',
   'play.check': 'Tekshirish',
   'play.finish': 'Yakunlash',
@@ -188,6 +189,7 @@ const uz = {
 
   'memory.instruction': 'Ikkita katakchani oching va juftini toping.',
   'memory.found': 'Topilgan juftlar: {found} / {total}',
+  'memory.tile.down': '{n}-katak, yopiq',
 
   'groupsort.instruction': 'Har bir elementni to‘g‘ri guruhga tashlang.',
   'groupsort.pool': 'Elementlar',
@@ -195,6 +197,13 @@ const uz = {
   'anagram.instruction': 'Harflarni surib, to‘g‘ri so‘zni yig‘ing.',
   'anagram.hint': 'Yordam: {hint}',
   'anagram.progress': 'So‘z {current} / {total}',
+  'dnd.instructions':
+    'Elementni olish uchun probel yoki Enter tugmasini bosing. Strelkalar bilan ko‘chiring, qo‘yish uchun yana probelni bosing. Escape bekor qiladi.',
+  'dnd.picked': '{item} olindi.',
+  'dnd.over': '{item} hozir {target} ustida.',
+  'dnd.dropped': '{item} {target} ichiga qo‘yildi.',
+  'dnd.returned': '{item} joyiga qaytarildi.',
+  'dnd.cancelled': '{item} bekor qilindi.',
   'helper.title': 'Kontent yordamchisi',
   'helper.convert.title': 'Boshqa turga aylantirish',
   'helper.convert.hint':
@@ -430,6 +439,7 @@ const ru: Record<TKey, string> = {
   'play.score': 'Очки: {score}',
   'play.correct': 'Правильно!',
   'play.wrong': 'Неправильно',
+  'play.correctAnswer': 'Правильный ответ',
   'play.next': 'Далее',
   'play.check': 'Проверить',
   'play.finish': 'Завершить',
@@ -482,6 +492,7 @@ const ru: Record<TKey, string> = {
 
   'memory.instruction': 'Открывайте по две карточки и находите пары.',
   'memory.found': 'Найдено пар: {found} / {total}',
+  'memory.tile.down': 'Карточка {n}, закрыта',
 
   'groupsort.instruction': 'Перетащите каждый элемент в нужную группу.',
   'groupsort.pool': 'Элементы',
@@ -489,6 +500,13 @@ const ru: Record<TKey, string> = {
   'anagram.instruction': 'Переставьте буквы и соберите слово.',
   'anagram.hint': 'Подсказка: {hint}',
   'anagram.progress': 'Слово {current} / {total}',
+  'dnd.instructions':
+    'Нажмите пробел или Enter, чтобы взять элемент. Перемещайте стрелками, отпустите повторным нажатием пробела. Escape отменяет.',
+  'dnd.picked': 'Элемент {item} взят.',
+  'dnd.over': '{item} сейчас над «{target}».',
+  'dnd.dropped': '{item} помещён в «{target}».',
+  'dnd.returned': '{item} возвращён на место.',
+  'dnd.cancelled': 'Перемещение {item} отменено.',
   'helper.title': 'Помощник по материалу',
   'helper.convert.title': 'Преобразовать в другой тип',
   'helper.convert.hint':

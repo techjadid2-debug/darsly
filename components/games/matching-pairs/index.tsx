@@ -38,7 +38,12 @@ export default function MatchingPairs({
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { remaining, elapsedSec } = useGameClock(settings, () => {
-    onFinish({ score: matched.size, maxScore: totalPairs, durationSec: elapsedSec() })
+    onFinish({
+      score: matched.size,
+      maxScore: totalPairs,
+      durationSec: elapsedSec(),
+      timedOut: true,
+    })
   })
 
   useEffect(
@@ -87,12 +92,14 @@ export default function MatchingPairs({
         <span>{tt('memory.instruction')}</span>
         <span className="flex shrink-0 items-center gap-2">
           <Timer remaining={remaining} />
-          {tt('memory.found', { found: matched.size, total: totalPairs })}
+          <span aria-live="polite">
+            {tt('memory.found', { found: matched.size, total: totalPairs })}
+          </span>
         </span>
       </div>
 
       <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-        {tiles.map((tile) => {
+        {tiles.map((tile, index) => {
           const isMatched = matched.has(tile.pairId)
           const isUp = isMatched || revealed.includes(tile.key)
 
@@ -103,7 +110,10 @@ export default function MatchingPairs({
                 onClick={() => flip(tile)}
                 disabled={isMatched}
                 animate={{ scale: isUp ? 1 : 0.98 }}
-                aria-pressed={isUp}
+                // Face up, the tile's own text is its name. Face down, it has
+                // none at all — every tile would announce as a bare "button" —
+                // so it is named by position, which gives away nothing.
+                aria-label={isUp ? undefined : tt('memory.tile.down', { n: index + 1 })}
                 className={[
                   'flex min-h-20 w-full items-center justify-center rounded-xl border p-2 text-center text-sm transition-colors',
                   isMatched

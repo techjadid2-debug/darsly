@@ -9,6 +9,12 @@ export type GameResult = {
   score: number
   maxScore: number
   durationSec: number
+  /**
+   * Set when the countdown ran out rather than the player finishing. The shell
+   * says so on the score screen — otherwise the game just vanishes mid-question
+   * and the score looks like a mistake.
+   */
+  timedOut?: boolean
 }
 
 export type GameProps<C> = {
