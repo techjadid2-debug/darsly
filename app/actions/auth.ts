@@ -41,6 +41,40 @@ export async function signInWithEmail(
   return { status: 'sent' }
 }
 
+/**
+ * Signs in with an email and password. The password grant is enabled at the
+ * Supabase API level; this is the form for it.
+ *
+ * The error is deliberately the same whether the address is unknown or the
+ * password is wrong — telling them apart would let anyone probe which teachers
+ * have accounts.
+ */
+export async function signInWithPassword(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const email = emailSchema.safeParse(formData.get('email'))
+  const password = formData.get('password')
+
+  if (!email.success || typeof password !== 'string' || password.length === 0) {
+    return { status: 'error', messageKey: 'login.error.badCredentials' }
+  }
+
+  const next = formData.get('next')
+  const nextPath = typeof next === 'string' && next.startsWith('/') ? next : '/dashboard'
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.data,
+    password,
+  })
+
+  if (error) return { status: 'error', messageKey: 'login.error.badCredentials' }
+
+  // Outside any try/catch: `redirect` works by throwing.
+  redirect(nextPath)
+}
+
 /** Starts the Google OAuth flow by redirecting to Supabase's consent URL. */
 export async function signInWithGoogle(formData: FormData): Promise<void> {
   const next = formData.get('next')

@@ -55,11 +55,14 @@ const uz = {
   'footer.builtFor': 'O‘zbekiston o‘qituvchilari uchun',
 
   'login.title': 'Kirish',
-  'login.subtitle':
-    'Elektron pochtangizga kirish havolasini yuboramiz — parol kerak emas.',
+  'login.subtitle': 'Parolingiz bilan kiring yoki pochtangizga havola oling.',
   'login.email': 'Elektron pochta',
   'login.emailPlaceholder': 'ism@maktab.uz',
   'login.sendLink': 'Havola yuborish',
+  'login.password': 'Parol',
+  'login.passwordSubmit': 'Kirish',
+  'login.signingIn': 'Kirilmoqda…',
+  'login.magicLinkTitle': 'Pochtangizga havola oling',
   'login.sending': 'Yuborilmoqda…',
   'login.google': 'Google bilan davom etish',
   'login.or': 'yoki',
@@ -70,6 +73,7 @@ const uz = {
   'login.error.sendFailed':
     'Havolani yuborib bo‘lmadi. Birozdan so‘ng qayta urinib ko‘ring.',
   'login.error.oauthFailed': 'Google orqali kirish amalga oshmadi.',
+  'login.error.badCredentials': 'Elektron pochta yoki parol noto‘g‘ri.',
 
   'dashboard.title': 'Mening mashqlarim',
   'dashboard.new': 'Yangi mashq',
@@ -373,11 +377,14 @@ const ru: Record<TKey, string> = {
   'footer.builtFor': 'Для учителей Узбекистана',
 
   'login.title': 'Вход',
-  'login.subtitle':
-    'Отправим ссылку для входа на вашу почту — пароль не нужен.',
+  'login.subtitle': 'Войдите с паролем или получите ссылку на почту.',
   'login.email': 'Электронная почта',
   'login.emailPlaceholder': 'imya@shkola.uz',
   'login.sendLink': 'Отправить ссылку',
+  'login.password': 'Пароль',
+  'login.passwordSubmit': 'Войти',
+  'login.signingIn': 'Вход…',
+  'login.magicLinkTitle': 'Получить ссылку на почту',
   'login.sending': 'Отправляем…',
   'login.google': 'Продолжить с Google',
   'login.or': 'или',
@@ -388,6 +395,7 @@ const ru: Record<TKey, string> = {
   'login.error.sendFailed':
     'Не удалось отправить ссылку. Попробуйте немного позже.',
   'login.error.oauthFailed': 'Не удалось войти через Google.',
+  'login.error.badCredentials': 'Неверный email или пароль.',
 
   'dashboard.title': 'Мои задания',
   'dashboard.new': 'Новое задание',

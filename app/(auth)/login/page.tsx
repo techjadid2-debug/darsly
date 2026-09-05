@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { signInWithGoogle } from '@/app/actions/auth'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { PasswordForm } from '@/components/auth/PasswordForm'
 import { Button } from '@/components/ui/Button'
 import { translator, type TKey } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
@@ -32,11 +33,7 @@ export default async function LoginPage({
       <p className="mt-2 text-sm text-ink-soft">{tt('login.subtitle')}</p>
 
       <div className="mt-7">
-        <LoginForm
-          locale={locale}
-          next={next}
-          initialErrorKey={initialErrorKey}
-        />
+        <PasswordForm locale={locale} next={next} />
       </div>
 
       <div className="my-6 flex items-center gap-3">
@@ -46,6 +43,17 @@ export default async function LoginPage({
         </span>
         <span className="h-px flex-1 bg-border" />
       </div>
+
+      <h2 className="text-sm font-medium text-ink">{tt('login.magicLinkTitle')}</h2>
+      <div className="mt-3">
+        <LoginForm
+          locale={locale}
+          next={next}
+          initialErrorKey={initialErrorKey}
+        />
+      </div>
+
+      <div className="my-6" />
 
       <form action={signInWithGoogle}>
         <input type="hidden" name="next" value={next} />
