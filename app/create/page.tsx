@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation'
 
 import { createActivity } from '@/app/actions/activities'
+import { getTeacherSession } from '@/lib/auth/session'
 import { Header } from '@/components/layout/Header'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { gamesForSchema, gameLabel } from '@/lib/games'
 import { translator, type TKey } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import type { SchemaType } from '@/lib/schemas'
-import { createClient } from '@/lib/supabase/server'
 
 /** Every schema now has at least one game, so all four are offered. */
 const CHOICES: ReadonlyArray<{
@@ -41,11 +41,8 @@ export default async function CreatePage({
   const locale = await getLocale()
   const tt = translator(locale)
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect(`/login?next=${encodeURIComponent('/create')}`)
+  const signedIn = await getTeacherSession()
+  if (!signedIn) redirect(`/login?next=${encodeURIComponent('/create')}`)
 
   return (
     <div className="flex min-h-dvh flex-col">

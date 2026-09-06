@@ -8,7 +8,8 @@ import { gameLabel, games, getGame } from '@/lib/games'
 import { t, translator } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import { countItems, isSchemaType } from '@/lib/schemas'
-import { createClient } from '@/lib/supabase/server'
+import { getTeacherSession } from '@/lib/auth/session'
+import { getPublicActivities } from '@/lib/db'
 import { grades, isGrade, isSubject, subjectKeys, subjects } from '@/lib/taxonomy'
 
 const PAGE_SIZE = 60
@@ -26,41 +27,35 @@ export default async function LibraryPage({
   const locale = await getLocale()
   const tt = translator(locale)
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const signedIn = await getTeacherSession()
 
   const subject = isSubject(params.subject) ? params.subject : undefined
   const grade = isGrade(params.grade) ? params.grade : undefined
   const selectedGame = getGame(params.game)
   const search = params.q?.trim() ?? ''
 
-  // The public-read RLS policy is what makes this query safe for anonymous
-  // visitors; is_public is repeated here so the intent is explicit.
-  let query = supabase
-    .from('activities')
-    .select('id, title, schema_type, content, default_game, subject, grade, play_count')
-    .eq('is_public', true)
+  let activities = null
+  let error = null
 
-  if (subject) query = query.eq('subject', subject)
-  if (grade) query = query.eq('grade', grade)
-  // Filtering by game means "playable as this game", which is a property of the
-  // activity's schema, not of the default game it happens to be saved with.
-  if (selectedGame) query = query.eq('schema_type', selectedGame.schemaType)
-  if (search) query = query.ilike('title', `%${search}%`)
-
-  const { data: activities, error } = await query
-    .order('play_count', { ascending: false })
-    .order('updated_at', { ascending: false })
-    .limit(PAGE_SIZE)
+  try {
+    activities = await getPublicActivities({
+      subject,
+      grade,
+      schemaType: selectedGame?.schemaType,
+      search: search || null,
+      limit: PAGE_SIZE,
+    })
+  } catch (err) {
+    console.error('Failed to load public activities:', err)
+    error = err
+  }
 
   const field =
     'h-11 w-full rounded-xl border border-border bg-surface px-3 text-base text-ink'
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <Header locale={locale} signedIn={Boolean(user)} />
+      <Header locale={locale} signedIn={signedIn} />
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <h1 className="text-2xl font-semibold text-ink">{tt('library.title')}</h1>

@@ -2,18 +2,13 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { getGame } from '@/lib/games'
-import { createClient } from '@/lib/supabase/server'
+import { insertResultRecord } from '@/lib/db'
 import { verifyTelegramInitData } from '@/lib/telegram'
 
 /**
- * Records one play result. RLS decides whether the insert is allowed at all:
- * a result may only be written against an activity the caller can play
- * (public, or their own). Everything below is shape and sanity checking on top
- * of that — the numbers arrive from the browser and cannot be trusted.
+ * Records one play result.
  */
 const bodySchema = z.object({
-  // `guid` rather than `uuid`: we only need the shape here. Postgres rejects a
-  // malformed id, and RLS decides whether the row may be written at all.
   activity_id: z.guid(),
   player_name: z.string().trim().min(1).max(60).nullish(),
   game: z.string().min(1).max(40),
@@ -47,19 +42,18 @@ export async function POST(request: Request) {
     : null
   const telegramUser = telegram?.ok ? telegram.user : null
 
-  const supabase = await createClient()
-  const { error } = await supabase.from('results').insert({
-    activity_id: body.activity_id,
-    player_name: telegramUser?.displayName ?? body.player_name ?? null,
-    player_tg_id: telegramUser?.id ?? null,
-    game: body.game,
-    score: body.score,
-    max_score: body.max_score,
-    duration_sec: body.duration_sec,
-  })
-
-  if (error) {
-    // The RLS policy rejects results aimed at an activity the caller cannot play.
+  try {
+    await insertResultRecord({
+      activity_id: body.activity_id,
+      player_name: telegramUser?.displayName ?? body.player_name ?? null,
+      player_tg_id: telegramUser?.id ?? null,
+      game: body.game,
+      score: body.score,
+      max_score: body.max_score,
+      duration_sec: body.duration_sec,
+    })
+  } catch (err) {
+    console.error('Failed to insert result:', err)
     return NextResponse.json({ error: 'rejected' }, { status: 403 })
   }
 

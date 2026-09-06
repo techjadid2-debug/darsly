@@ -29,17 +29,20 @@ The landing page reads the list from the registry, so it stays in step.
 ## Stack
 
 Next.js 15 (App Router) · TypeScript strict · Tailwind CSS v4 ·
-Supabase (Postgres + Auth + RLS) via `@supabase/ssr` · `@dnd-kit/core` ·
+Vercel Postgres (Neon) via `@neondatabase/serverless` · `@dnd-kit/core` ·
 `framer-motion` · deployed on Vercel.
 
 No Redux, no tRPC, no ORM. Mutations go through server actions; the browser
 never writes to `activities` directly.
 
+Designed for a teacher on a computer and electronic smartboard: login requires only
+the teacher passcode (no registration or email confirmation required).
+
 ## Setup
 
 ```bash
 pnpm install
-cp .env.example .env.local   # fill in the three values
+cp .env.example .env.local   # fill in POSTGRES_URL and TEACHER_PASSWORD
 pnpm dev
 pnpm test                    # unit tests for the content logic
 pnpm e2e                     # Playwright, drives the games in a browser
@@ -54,9 +57,10 @@ flag, so the route is a 404 in production.
 
 | Variable | Notes |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Project API URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` key |
-| `NEXT_PUBLIC_SITE_URL` | Fallback origin; auth redirects prefer the request host |
+| `POSTGRES_URL` | Vercel Postgres / Neon connection URL |
+| `TEACHER_PASSWORD` | Passcode for smartboard and desktop teacher login (defaults to `darsly123`) |
+| `SESSION_SECRET` | Secret key for signing the 30-day session cookie |
+| `NEXT_PUBLIC_SITE_URL` | Fallback origin; defaults to `http://localhost:3000` |
 | `TELEGRAM_BOT_TOKEN` | M7 only, server-side |
 
 There is no `SUPABASE_SERVICE_ROLE_KEY` and no LLM API key: `play_count` is

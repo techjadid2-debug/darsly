@@ -10,7 +10,8 @@ import { translator } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import { getSiteUrl } from '@/lib/site-url'
 import { isSchemaType, parseSettings } from '@/lib/schemas'
-import { createClient } from '@/lib/supabase/server'
+import { getTeacherSession } from '@/lib/auth/session'
+import { getActivityById, getResultsForActivity } from '@/lib/db'
 
 function isEditable(schemaType: string): schemaType is EditableSchema {
   return schemaType === 'pairs' || schemaType === 'mcq' || schemaType === 'groups'
@@ -29,30 +30,11 @@ export default async function EditPage({
   const tt = translator(locale)
   const siteUrl = await getSiteUrl()
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect(`/login?next=${encodeURIComponent(`/edit/${id}`)}`)
+  const signedIn = await getTeacherSession()
+  if (!signedIn) redirect(`/login?next=${encodeURIComponent(`/edit/${id}`)}`)
 
-  // Scoped to the owner explicitly: the public-read policy would otherwise let
-  // anyone open the editor on someone else's public activity.
-  const { data: activity } = await supabase
-    .from('activities')
-    .select('id, title, schema_type, content, default_game, settings, subject, grade, is_public')
-    .eq('id', id)
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
-  // Owner-only by RLS: the results policy checks the activity's owner_id.
-  const { data: results } = activity
-    ? await supabase
-        .from('results')
-        .select('id, player_name, game, score, max_score, duration_sec, created_at')
-        .eq('activity_id', id)
-        .order('created_at', { ascending: false })
-        .limit(100)
-    : { data: null }
+  const activity = await getActivityById(id)
+  const results = activity ? await getResultsForActivity(id) : []
 
   const notFound = (
     <div className="mx-auto w-full max-w-3xl px-4 py-10">

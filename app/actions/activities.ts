@@ -14,7 +14,15 @@ import {
   parseSettings,
   type SchemaType,
 } from '@/lib/schemas'
-import { createClient } from '@/lib/supabase/server'
+import { getTeacherSession } from '@/lib/auth/session'
+import {
+  createActivityRecord,
+  deleteActivityRecord,
+  getActivityById,
+  incrementPlayCountRecord,
+  updateActivityRecord,
+  getSql,
+} from '@/lib/db'
 
 export type SaveState = { ok: true; savedAt: number } | { ok: false; reason: string }
 
@@ -26,37 +34,32 @@ export async function createActivity(formData: FormData): Promise<void> {
   }
   const schemaType: SchemaType = raw
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect(`/login?next=${encodeURIComponent('/create')}`)
+  const signedIn = await getTeacherSession()
+  if (!signedIn) redirect(`/login?next=${encodeURIComponent('/create')}`)
 
   const game = defaultGameFor(schemaType)
   if (!game) redirect('/create?error=schema')
 
-  const { data, error } = await supabase
-    .from('activities')
-    .insert({
-      owner_id: user.id,
+  let newId: string
+  try {
+    newId = await createActivityRecord({
       schema_type: schemaType,
-      content: emptyContent(schemaType) as never,
+      content: emptyContent(schemaType),
       default_game: game.id,
       title: '',
     })
-    .select('id')
-    .single()
-
-  if (error || !data) redirect('/create?error=create')
+  } catch (err) {
+    console.error('Failed to create activity:', err)
+    redirect('/create?error=create')
+  }
 
   revalidatePath('/dashboard')
-  redirect(`/edit/${data.id}`)
+  redirect(`/edit/${newId}`)
 }
 
 /**
  * Autosave target. Content is validated against the activity's own
- * `schema_type`, read back from the database rather than trusted from the
- * client, so a bad payload can never be stored.
+ * `schema_type`, read back from the database.
  */
 export async function saveActivity(input: {
   id: string
@@ -68,23 +71,18 @@ export async function saveActivity(input: {
   grade?: string | null
   isPublic?: boolean
 }): Promise<SaveState> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { ok: false, reason: 'not-authenticated' }
+  const signedIn = await getTeacherSession()
+  if (!signedIn) return { ok: false, reason: 'not-authenticated' }
 
-  // Scoped to the owner. RLS also lets anyone read a public activity, so an
-  // id-only lookup would succeed for someone else's activity and the update
-  // below would then silently match zero rows while reporting success.
-  const { data: existing, error: readError } = await supabase
-    .from('activities')
-    .select('schema_type, settings, subject, grade, is_public')
-    .eq('id', input.id)
-    .eq('owner_id', user.id)
-    .maybeSingle()
+  let existing
+  try {
+    existing = await getActivityById(input.id)
+  } catch (err) {
+    console.error('Failed to read activity for save:', err)
+    return { ok: false, reason: 'read-failed' }
+  }
 
-  if (readError || !existing) return { ok: false, reason: 'not-found' }
+  if (!existing) return { ok: false, reason: 'not-found' }
   if (!isSchemaType(existing.schema_type)) return { ok: false, reason: 'bad-schema' }
 
   const parsedContent = contentSchemas[existing.schema_type].safeParse(input.content)
@@ -100,8 +98,6 @@ export async function saveActivity(input: {
     input.settings === undefined ? existing.settings : input.settings,
   )
 
-  // Unknown subjects and grades are stored as null rather than rejected, so a
-  // stale client can never wedge the autosave loop.
   const subject =
     input.subject === undefined
       ? existing.subject
@@ -116,24 +112,22 @@ export async function saveActivity(input: {
         : null
   const isPublic = input.isPublic === undefined ? existing.is_public : input.isPublic
 
-  // `.select()` makes the update report which rows it actually touched, so a
-  // write blocked by RLS is reported as a failure instead of a silent success.
-  const { data: written, error: writeError } = await supabase
-    .from('activities')
-    .update({
+  try {
+    const updated = await updateActivityRecord(input.id, {
       title: input.title.slice(0, 200),
-      content: parsedContent.data as never,
+      content: parsedContent.data,
       default_game: defaultGame,
-      settings: settings as never,
+      settings,
       subject,
       grade,
       is_public: isPublic,
     })
-    .eq('id', input.id)
-    .eq('owner_id', user.id)
-    .select('id')
 
-  if (writeError || !written || written.length === 0) {
+    if (!updated) {
+      return { ok: false, reason: 'write-failed' }
+    }
+  } catch (err) {
+    console.error('Failed to update activity:', err)
     return { ok: false, reason: 'write-failed' }
   }
 
@@ -143,39 +137,29 @@ export async function saveActivity(input: {
 }
 
 /**
- * Deletes one activity the caller owns. RLS would already refuse someone
- * else's row, but a delete matching zero rows is indistinguishable from one
- * that worked — and unlike a failed save this is not recoverable — so the
- * owner scope and the `select` that proves a row went are both explicit.
+ * Deletes one activity by ID.
  */
 export async function deleteActivity(formData: FormData): Promise<void> {
   const id = formData.get('id')
   if (typeof id !== 'string') redirect('/dashboard?error=delete')
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect(`/login?next=${encodeURIComponent('/dashboard')}`)
+  const signedIn = await getTeacherSession()
+  if (!signedIn) redirect(`/login?next=${encodeURIComponent('/dashboard')}`)
 
-  const { data: deleted, error } = await supabase
-    .from('activities')
-    .delete()
-    .eq('id', id)
-    .eq('owner_id', user.id)
-    .select('id')
-
-  if (error || !deleted || deleted.length === 0) redirect('/dashboard?error=delete')
+  try {
+    const deleted = await deleteActivityRecord(id)
+    if (!deleted) redirect('/dashboard?error=delete')
+  } catch (err) {
+    console.error('Failed to delete activity:', err)
+    redirect('/dashboard?error=delete')
+  }
 
   revalidatePath('/dashboard')
   redirect('/dashboard')
 }
 
 /**
- * Runs a schema conversion and saves the result as a **new** activity, leaving
- * the source untouched. The source content is read from the database rather
- * than accepted from the client, so the conversion always runs on content that
- * has already been validated once.
+ * Runs a schema conversion and saves the result as a new activity.
  */
 export async function createFromConversion(formData: FormData): Promise<void> {
   const sourceId = formData.get('sourceId')
@@ -193,19 +177,10 @@ export async function createFromConversion(formData: FormData): Promise<void> {
   const locale =
     typeof rawLocale === 'string' && isLocale(rawLocale) ? rawLocale : defaultLocale
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect(`/login?next=${encodeURIComponent(`/edit/${sourceId}`)}`)
+  const signedIn = await getTeacherSession()
+  if (!signedIn) redirect(`/login?next=${encodeURIComponent(`/edit/${sourceId}`)}`)
 
-  const { data: source } = await supabase
-    .from('activities')
-    .select('title, schema_type, content, subject, grade, lang, settings')
-    .eq('id', sourceId)
-    .eq('owner_id', user.id)
-    .maybeSingle()
-
+  const source = await getActivityById(sourceId)
   if (!source) redirect(`/edit/${sourceId}?error=convert`)
 
   const result = convert(conversionId, source.content, locale)
@@ -217,30 +192,36 @@ export async function createFromConversion(formData: FormData): Promise<void> {
   const suffix = t(conversion.labelKey, locale)
   const baseTitle = source.title.trim()
 
-  const { data: created, error } = await supabase
-    .from('activities')
-    .insert({
-      owner_id: user.id,
-      schema_type: result.schemaType,
-      content: result.content as never,
-      default_game: game.id,
-      title: baseTitle ? `${baseTitle} — ${suffix}` : suffix,
-      subject: source.subject,
-      grade: source.grade,
-      lang: source.lang,
-      settings: source.settings,
-    })
-    .select('id')
-    .single()
+  const sql = getSql()
+  const rows = await sql`
+    INSERT INTO activities (
+      schema_type, content, default_game, title, subject, grade, lang, settings
+    )
+    VALUES (
+      ${result.schemaType},
+      ${JSON.stringify(result.content)},
+      ${game.id},
+      ${baseTitle ? `${baseTitle} — ${suffix}` : suffix},
+      ${source.subject},
+      ${source.grade},
+      ${source.lang},
+      ${JSON.stringify(source.settings)}
+    )
+    RETURNING id
+  `
 
-  if (error || !created) redirect(`/edit/${sourceId}?error=convert`)
+  const createdId = rows[0]?.id as string
+  if (!createdId) redirect(`/edit/${sourceId}?error=convert`)
 
   revalidatePath('/dashboard')
-  redirect(`/edit/${created.id}`)
+  redirect(`/edit/${createdId}`)
 }
 
-/** Bumps the public play counter. Anonymous players reach this through the RPC. */
+/** Bumps the public play counter. */
 export async function recordPlay(activityId: string): Promise<void> {
-  const supabase = await createClient()
-  await supabase.rpc('increment_play_count', { p_activity_id: activityId })
+  try {
+    await incrementPlayCountRecord(activityId)
+  } catch (err) {
+    console.error('Failed to increment play count:', err)
+  }
 }

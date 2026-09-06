@@ -12,7 +12,7 @@ import {
   type SchemaType,
 } from '@/lib/schemas'
 import { shuffle } from '@/lib/shuffle'
-import { createClient } from '@/lib/supabase/server'
+import { getActivityById } from '@/lib/db'
 
 const LETTERS: Record<Locale, readonly string[]> = {
   uz: ['A', 'B', 'C', 'D', 'E', 'F'],
@@ -196,12 +196,7 @@ export default async function PrintPage({
   const locale = await getLocale()
   const tt = translator(locale)
 
-  const supabase = await createClient()
-  const { data: activity } = await supabase
-    .from('activities')
-    .select('id, title, description, schema_type, content')
-    .eq('id', id)
-    .maybeSingle()
+  const activity = await getActivityById(id)
 
   if (!activity) {
     return (

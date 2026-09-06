@@ -10,7 +10,7 @@ import { gameLabel, gamesForSchema, resolveGame } from '@/lib/games'
 import { translator } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import { isSchemaType, parseSettings } from '@/lib/schemas'
-import { createClient } from '@/lib/supabase/server'
+import { getActivityById } from '@/lib/db'
 
 export default async function PlayPage({
   params,
@@ -24,13 +24,7 @@ export default async function PlayPage({
   const locale = await getLocale()
   const tt = translator(locale)
 
-  // RLS decides visibility: the owner sees their own, everyone sees public ones.
-  const supabase = await createClient()
-  const { data: activity } = await supabase
-    .from('activities')
-    .select('id, title, schema_type, content, default_game, settings, is_public')
-    .eq('id', id)
-    .maybeSingle()
+  const activity = await getActivityById(id)
 
   if (!activity || !isSchemaType(activity.schema_type)) {
     return (

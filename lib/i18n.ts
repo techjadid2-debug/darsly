@@ -55,11 +55,11 @@ const uz = {
   'footer.builtFor': 'O‘zbekiston o‘qituvchilari uchun',
 
   'login.title': 'Kirish',
-  'login.subtitle': 'Parolingiz bilan kiring yoki pochtangizga havola oling.',
+  'login.subtitle': 'Dars va mashqlarni boshqarish uchun parolni kiriting.',
   'login.email': 'Elektron pochta',
   'login.emailPlaceholder': 'ism@maktab.uz',
   'login.sendLink': 'Havola yuborish',
-  'login.password': 'Parol',
+  'login.password': 'Ustoz paroli',
   'login.passwordSubmit': 'Kirish',
   'login.signingIn': 'Kirilmoqda…',
   'login.magicLinkTitle': 'Pochtangizga havola oling',
@@ -73,7 +73,9 @@ const uz = {
   'login.error.sendFailed':
     'Havolani yuborib bo‘lmadi. Birozdan so‘ng qayta urinib ko‘ring.',
   'login.error.oauthFailed': 'Google orqali kirish amalga oshmadi.',
-  'login.error.badCredentials': 'Elektron pochta yoki parol noto‘g‘ri.',
+  'login.error.badCredentials': 'Kiritilgan parol noto‘g‘ri.',
+  'login.error.emailNotConfirmed':
+    'Elektron pochta tasdiqlanmagan. Iltimos, pochtangizga borgan xat orqali tasdiqlang.',
 
   'dashboard.title': 'Mening mashqlarim',
   'dashboard.new': 'Yangi mashq',
@@ -377,11 +379,11 @@ const ru: Record<TKey, string> = {
   'footer.builtFor': 'Для учителей Узбекистана',
 
   'login.title': 'Вход',
-  'login.subtitle': 'Войдите с паролем или получите ссылку на почту.',
+  'login.subtitle': 'Введите пароль для управления заданиями и уроками.',
   'login.email': 'Электронная почта',
   'login.emailPlaceholder': 'imya@shkola.uz',
   'login.sendLink': 'Отправить ссылку',
-  'login.password': 'Пароль',
+  'login.password': 'Пароль учителя',
   'login.passwordSubmit': 'Войти',
   'login.signingIn': 'Вход…',
   'login.magicLinkTitle': 'Получить ссылку на почту',
@@ -395,7 +397,9 @@ const ru: Record<TKey, string> = {
   'login.error.sendFailed':
     'Не удалось отправить ссылку. Попробуйте немного позже.',
   'login.error.oauthFailed': 'Не удалось войти через Google.',
-  'login.error.badCredentials': 'Неверный email или пароль.',
+  'login.error.badCredentials': 'Неверный пароль.',
+  'login.error.emailNotConfirmed':
+    'Электронная почта не подтверждена. Пожалуйста, подтвердите email по ссылке из письма.',
 
   'dashboard.title': 'Мои задания',
   'dashboard.new': 'Новое задание',

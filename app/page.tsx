@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card'
 import { gameLabel, games } from '@/lib/games'
 import { translator, type TKey } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
-import { createClient } from '@/lib/supabase/server'
+import { getTeacherSession } from '@/lib/auth/session'
 
 const STEPS: ReadonlyArray<{ title: TKey; body: TKey }> = [
   { title: 'how.step1.title', body: 'how.step1.body' },
@@ -21,14 +21,11 @@ export default async function LandingPage() {
   const locale = await getLocale()
   const tt = translator(locale)
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const signedIn = await getTeacherSession()
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <Header locale={locale} signedIn={Boolean(user)} />
+      <Header locale={locale} signedIn={signedIn} />
 
       <main className="flex-1">
         <section className="mx-auto w-full max-w-5xl px-4 pb-14 pt-12 sm:pt-20">

@@ -10,7 +10,8 @@ import { gameLabel, getGame } from '@/lib/games'
 import { t, translator } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import { countItems, isSchemaType } from '@/lib/schemas'
-import { createClient } from '@/lib/supabase/server'
+import { getTeacherSession } from '@/lib/auth/session'
+import { getAllActivities } from '@/lib/db'
 
 export async function generateMetadata() {
   return { title: t('dashboard.title', await getLocale()) }
@@ -25,22 +26,17 @@ export default async function DashboardPage({
   const locale = await getLocale()
   const tt = translator(locale)
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const signedIn = await getTeacherSession()
+  if (!signedIn) redirect('/login?next=/dashboard')
 
-  // Middleware already guards this route; this is the defence in depth.
-  if (!user) redirect('/login?next=/dashboard')
-
-  // Scoped to the owner explicitly. RLS alone is not enough here: the
-  // public-read policy is OR'd with the owner policy, so an unscoped select
-  // would list every other teacher's public activity as if it were yours.
-  const { data: activities, error } = await supabase
-    .from('activities')
-    .select('id, title, schema_type, content, default_game, is_public, play_count, updated_at')
-    .eq('owner_id', user.id)
-    .order('updated_at', { ascending: false })
+  let activities = null
+  let error = null
+  try {
+    activities = await getAllActivities()
+  } catch (err) {
+    console.error('Error fetching activities:', err)
+    error = err
+  }
 
   return (
     <div className="flex min-h-dvh flex-col">

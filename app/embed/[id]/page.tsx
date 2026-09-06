@@ -8,12 +8,11 @@ import { resolveGame } from '@/lib/games'
 import { translator } from '@/lib/i18n'
 import { getLocale } from '@/lib/locale'
 import { isSchemaType, parseSettings } from '@/lib/schemas'
-import { createClient } from '@/lib/supabase/server'
+import { getActivityById } from '@/lib/db'
 
 /**
  * The player with no chrome, for embedding in an iframe on a school site or
- * an LMS. Same data path and same RLS as /play — an activity that is not
- * public simply does not load.
+ * an LMS.
  */
 export default async function EmbedPage({
   params,
@@ -27,12 +26,7 @@ export default async function EmbedPage({
   const locale = await getLocale()
   const tt = translator(locale)
 
-  const supabase = await createClient()
-  const { data: activity } = await supabase
-    .from('activities')
-    .select('id, title, schema_type, content, default_game, settings, is_public')
-    .eq('id', id)
-    .maybeSingle()
+  const activity = await getActivityById(id)
 
   if (!activity || !isSchemaType(activity.schema_type)) {
     return (
